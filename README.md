@@ -1,6 +1,6 @@
 # ⌨️ Conduit Axum
 
-![version](https://img.shields.io/badge/version-0.1.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![rust](https://img.shields.io/badge/rust-1.77.1-black.svg) ![cargo](https://img.shields.io/badge/cargo-1.77.1-purple.svg)
+![version](https://img.shields.io/badge/version-0.1.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![rust](https://img.shields.io/badge/rust-1.77.1-black.svg) ![cargo](https://img.shields.io/badge/cargo-1.77.1-black.svg)
 
 
 ## 💡 Introduction
