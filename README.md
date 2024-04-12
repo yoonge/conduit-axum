@@ -17,7 +17,7 @@ $ git clone https://github.com/yoonge/conduit-axum.git
 
 $ cd conduit-axum
 
-$ cargo run
+$ RUST_LOG=debug cargo run
 ```
 
 

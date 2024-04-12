@@ -1,9 +1,10 @@
 use axum::{
     http::StatusCode,
-    routing::{get, post, trace},
+    routing::{get, post},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use tokio::net::TcpListener;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tracing::Level;
 
@@ -29,7 +30,7 @@ async fn main() {
         .layer(trace_layer);
 
     // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3001")
+    let listener = TcpListener::bind("127.0.0.1:3001")
         .await
         .unwrap();
     axum::serve(listener, app).await.unwrap();
