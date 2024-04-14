@@ -3,13 +3,22 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use diesel::prelude::*;
+use diesel::{
+    r2d2::{ConnectionManager, Pool},
+    PgConnection,
+};
+use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
+use std::env;
 use tokio::net::TcpListener;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
-use tracing::Level;
+use tracing::{info, Level};
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+
     // initialize tracing
     tracing_subscriber::fmt()
         .with_target(false)
@@ -21,6 +30,14 @@ async fn main() {
         .on_request(DefaultOnRequest::new().level(Level::INFO))
         .on_response(DefaultOnResponse::new().level(Level::INFO));
 
+    let db_url = env::var("DATABASE_URL").expect("`DATABASE_URL` must be set.");
+    let manager = ConnectionManager::<PgConnection>::new(db_url);
+    let pool = Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.");
+    let _conn = pool.get().expect("Failed to get connection.");
+    info!("Database connection established.");
+
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root`
@@ -30,9 +47,7 @@ async fn main() {
         .layer(trace_layer);
 
     // run our app with hyper, listening globally on port 3000
-    let listener = TcpListener::bind("127.0.0.1:3001")
-        .await
-        .unwrap();
+    let listener = TcpListener::bind("127.0.0.1:3001").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
