@@ -1,23 +1,24 @@
 use axum::{
+    extract::State,
     http::StatusCode,
-    routing::{get, post},
+    routing::get,
     Json, Router,
 };
+use deadpool_diesel::{postgres, Runtime};
 use diesel::prelude::*;
-use diesel::{
-    r2d2::{ConnectionManager, Pool},
-    PgConnection,
-};
-use dotenv::dotenv;
-use serde::{Deserialize, Serialize};
-use std::env;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use tokio::net::TcpListener;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
-use tracing::{info, Level};
+use tracing::{debug, info, Level};
+
+use conduit_axum::models::{NewUser, User};
+use conduit_axum::schema::users;
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
+    dotenv::dotenv().ok();
 
     // initialize tracing
     tracing_subscriber::fmt()
@@ -30,13 +31,20 @@ async fn main() {
         .on_request(DefaultOnRequest::new().level(Level::INFO))
         .on_response(DefaultOnResponse::new().level(Level::INFO));
 
-    let db_url = env::var("DATABASE_URL").expect("`DATABASE_URL` must be set.");
-    let manager = ConnectionManager::<PgConnection>::new(db_url);
-    let pool = Pool::builder()
-        .build(manager)
+    let db_url = std::env::var("DATABASE_URL").expect("`DATABASE_URL` must be set.");
+    let manager = postgres::Manager::new(db_url, Runtime::Tokio1);
+    let pool = postgres::Pool::builder(manager)
+        .build()
         .expect("Failed to create pool.");
-    let _conn = pool.get().expect("Failed to get connection.");
-    info!("Database connection established.");
+
+    {
+        let conn = pool.get().await.expect("Failed to get connection.");
+        info!("Database connection established.");
+        conn.interact(|pgc| pgc.run_pending_migrations(MIGRATIONS).map(|_| ()))
+            .await
+            .unwrap()
+            .unwrap();
+    }
 
     // build our application with a route
     let app = Router::new()
@@ -44,10 +52,13 @@ async fn main() {
         .route("/", get(root))
         // `POST /users` goes to `create_user`
         // .route("/users", post(create_user));
+        .with_state(pool)
         .layer(trace_layer);
 
     // run our app with hyper, listening globally on port 3000
-    let listener = TcpListener::bind("127.0.0.1:3001").await.unwrap();
+    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3001));
+    debug!("listening on {}", addr);
+    let listener = TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
@@ -56,31 +67,25 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-// async fn create_user(
-//     // this argument tells axum to parse the request body
-//     // as JSON into a `CreateUser` type
-//     Json(payload): Json<CreateUser>,
-// ) -> (StatusCode, Json<User>) {
-//     // insert your application logic here
-//     let user = User {
-//         id: 1337,
-//         username: payload.username,
-//     };
+async fn create_user(
+    // this argument tells axum to parse the request body
+    // as JSON into a `NewUser` type
+    State(pool): State<postgres::Pool>,
+    Json(payload): Json<NewUser<'_>>,
+) -> Result<Json<User>, (StatusCode, String)> {
+    let conn = pool
+        .get()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let new_user = conn
+        .interact(|pgc| {
+            diesel::insert_into(users::table)
+                .values(&payload)
+                .returning(User::as_returning())
+                .get_result(pgc);
+        })
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-//     // this will be converted into a JSON response
-//     // with a status code of `201 Created`
-//     (StatusCode::CREATED, Json(user))
-// }
-
-// the input to our `create_user` handler
-// #[derive(Deserialize)]
-// struct CreateUser {
-//     username: String,
-// }
-
-// the output to our `create_user` handler
-#[derive(Serialize)]
-struct User {
-    id: u64,
-    username: String,
+    Ok(Json(new_user))
 }
