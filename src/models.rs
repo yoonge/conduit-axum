@@ -5,16 +5,18 @@ use super::schema::users;
 #[derive(Debug, Queryable, Selectable, Serialize)]
 pub struct User {
     pub id: u64,
-    pub avatar: Option<String>,
-    pub bio: Option<String>,
-    pub birthday: Option<String>,
+    pub avatar: String,
+    pub bio: String,
+    pub birthday: String,
+    pub created_at: String,
     pub email: String,
     pub favorite: Vec<u64>,
-    pub gender: Option<u64>,
-    pub nickname: Option<String>,
+    // 1: male, 0: female, -1: secret
+    pub gender: i8,
+    pub nickname: String,
     pub password: String,
-    pub phone: Option<u64>,
-    pub position: Option<String>,
+    pub phone: u64,
+    pub position: String,
     pub username: String,
 }
 

@@ -2,15 +2,16 @@
 CREATE TABLE users (
   id SERIAL NOT NULL PRIMARY KEY,
   avatar TEXT NOT NULL DEFAULT '/images/typescript.svg',
-  bio TEXT,
-  birthday TEXT,
+  bio TEXT NOT NULL DEFAULT '',
+  birthday TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   email TEXT NOT NULL,
-  favorite TEXT[],
-  gender INTEGER,
-  nickname TEXT,
+  favorite INTEGER[] NOT NULL DEFAULT ARRAY[]::INTEGER[],
+  -- 1: male, 0: female, -1: secret
+  gender SMALLINT NOT NULL DEFAULT -1,
+  nickname TEXT NOT NULL DEFAULT '',
   password TEXT NOT NULL,
-  phone TEXT,
-  position TEXT,
-  username TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  phone TEXT NOT NULL DEFAULT '',
+  position TEXT NOT NULL DEFAULT '',
+  username TEXT NOT NULL
 );
