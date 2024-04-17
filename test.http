@@ -2,3 +2,22 @@
 
 ### Homepage
 GET {{host}}/ HTTP/1.1
+
+
+### Register
+POST {{host}}/register HTTP/1.1
+content-type: application/json
+
+{
+    "email": "o@qq.com",
+    "password": "123456",
+    "username": "o"
+}
+
+
+### User Info
+GET {{host}}/user/1 HTTP/1.1
+
+
+### Users List
+GET {{host}}/user/list HTTP/1.1

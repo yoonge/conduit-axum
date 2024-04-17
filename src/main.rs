@@ -29,7 +29,9 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route("/", get(root))
-        .route("/user/create", post(api::user::create_user))
+        .route("/register", post(api::user::create_user))
+        .route("/user/:user_id", get(api::user::get_user))
+        .route("/user/list", get(api::user::get_users))
         .with_state(pool)
         .layer(trace_layer);
 
@@ -44,24 +46,6 @@ async fn main() {
 async fn root() -> &'static str {
     "Hello, World!"
 }
-
-// async fn create_user(
-//     // this argument tells axum to parse the request body
-//     // as JSON into a `NewUser` type
-//     State(pool): State<Pool>,
-//     Json(new_user): Json<NewUser<'static>>
-// ) -> Result<usize, (StatusCode, String)> {
-//     let mut conn = pool.get().await.map_err(internal_error)?;
-
-//     let res = diesel::insert_into(users::table)
-//         .values(new_user)
-//         // .returning(users::all_columns)
-//         .execute(&mut conn)
-//         .await
-//         .map_err(internal_error)?;
-
-//     Ok(res)
-// }
 
 // fn internal_error<E>(err: E) -> (StatusCode, String)
 // where
