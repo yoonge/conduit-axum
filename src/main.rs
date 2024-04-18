@@ -30,8 +30,9 @@ async fn main() {
     let app = Router::new()
         .route("/", get(root))
         .route("/register", post(api::user::create_user))
-        .route("/user/:user_id", get(api::user::get_user))
+        .route("/user/:username", get(api::user::get_user))
         .route("/user/list", get(api::user::get_users))
+        .route("/verify/:password", get(api::user::verify_pwd))
         .with_state(pool)
         .layer(trace_layer);
 

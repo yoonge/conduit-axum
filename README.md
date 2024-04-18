@@ -1,11 +1,11 @@
 # ⌨️ Conduit Axum
 
-![version](https://img.shields.io/badge/version-0.1.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![rust](https://img.shields.io/badge/rust-1.77.1-black.svg) ![cargo](https://img.shields.io/badge/cargo-1.77.1-black.svg)
+![version](https://img.shields.io/badge/version-0.1.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![axum](https://img.shields.io/badge/axum-0.7.5-a21caf.svg) ![postgresql](https://img.shields.io/badge/postgresql-16.2-336792.svg) ![rust](https://img.shields.io/badge/rust-1.77.1-black.svg) ![sqlx](https://img.shields.io/badge/sqlx-0.7.4-orange.svg) ![cargo](https://img.shields.io/badge/cargo-1.77.1-black.svg)
 
 
 ## 💡 Introduction
 
-Realworld: "The mother of all demo apps" — Exemplary SSR fullstack Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-axum)), built with Rust + Axum.
+Realworld: "The mother of all demo apps" — Exemplary SSR fullstack Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-axum)), built with Axum + PostgreSQL + SQLx.
 
 Besides，this repository also provides RESTful APIs for [Conduit React](https://github.com/yoonge/conduit-react).
 
@@ -17,7 +17,12 @@ $ git clone https://github.com/yoonge/conduit-axum.git
 
 $ cd conduit-axum
 
-$ RUST_LOG=debug cargo run
+# Change the URL with your own username, password, and database_name
+$ echo "DATABASE_URL=postgresql://username:password@localhost:5432/database_name" > .env
+
+$ echo "RUST_LOG=debug" >> .env
+
+$ cargo run
 ```
 
 
