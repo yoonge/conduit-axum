@@ -9,13 +9,16 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.82"
+argon2 = "0.5.3"
 axum = "0.7.5"
 dotenvy = "0.15.7"
+rand = "0.8.5"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.115"
-sqlx = { version = "0.7.4", features = ["macros", "postgres", "runtime-async-std", "tls-native-tls", "time"] }
-time = { version = "0.3.36", features = ["serde-human-readable"] }
+sqlx = { version = "0.7.4", features = ["postgres", "runtime-async-std", "tls-native-tls", "time", "uuid"] }
+time = { version = "0.3.36", features = ["macros", "serde-human-readable"] }
 tokio = { version = "1.37.0", features = ["full"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+uuid = { version = "1.8.0", features = ["serde"] }
