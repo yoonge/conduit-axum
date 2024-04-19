@@ -26,17 +26,15 @@ async fn main() {
 
     let pool = db::establish_connection().await;
 
-    // build our application with a route
     let app = Router::new()
-        .route("/", get(root))
-        .route("/register", post(api::user::create_user))
-        .route("/user/:username", get(api::user::get_user))
-        .route("/user/list", get(api::user::get_users))
-        .route("/verify/:password", get(api::user::verify_pwd))
+        .route("/api", get(root))
+        .route("/api/register", post(api::user::create_user))
+        .route("/api/user/:username", get(api::user::get_user))
+        .route("/api/user/list", get(api::user::get_users))
+        .route("/api/verify/:password", get(api::user::verify_pwd))
         .with_state(pool)
         .layer(trace_layer);
 
-    // run our app with hyper, listening globally on port 3000
     let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3001));
     info!("listening on {}", addr);
     let listener = TcpListener::bind(addr).await.unwrap();
