@@ -44,7 +44,7 @@ pub async fn get_user(
 ) -> Result<Json<User>, AppError> {
     let user: User = sqlx::query_as(
         r#"
-            select id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, username
+            select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
             from users
             where username = $1
         "#
@@ -60,7 +60,7 @@ pub async fn get_user(
 pub async fn get_users(State(pool): State<Pool<Postgres>>) -> Result<Json<Vec<User>>, AppError> {
     let users: Vec<User> = sqlx::query_as(
         r#"
-            select id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, username
+            select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
             from users
         "#
     )

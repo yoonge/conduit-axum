@@ -32,6 +32,8 @@ async fn main() {
         .route("/api/user/:username", get(api::user::get_user))
         .route("/api/user/list", get(api::user::get_users))
         .route("/api/verify/:password", get(api::user::verify_pwd))
+        .route("/api/topic/initiate", post(api::topic::create_topic))
+        .route("/api/topic/:topic_id", get(api::topic::get_topic))
         .with_state(pool)
         .layer(trace_layer);
 
