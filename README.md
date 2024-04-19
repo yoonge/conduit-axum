@@ -22,6 +22,10 @@ $ echo "DATABASE_URL=postgresql://username:password@localhost:5432/database_name
 
 $ echo "RUST_LOG=debug" >> .env
 
+$ cargo install sqlx-cli
+
+$ sqlx migrate run
+
 $ cargo run
 ```
 

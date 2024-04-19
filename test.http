@@ -1,4 +1,4 @@
-@host = http://localhost:3001
+@host = http://localhost:3001/api
 
 ### Homepage
 GET {{host}}/ HTTP/1.1
@@ -9,9 +9,9 @@ POST {{host}}/register HTTP/1.1
 content-type: application/json
 
 {
-    "email": "q@qq.com",
+    "email": "p@qq.com",
     "password": "123456",
-    "username": "q"
+    "username": "p"
 }
 
 

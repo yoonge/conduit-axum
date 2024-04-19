@@ -4,12 +4,13 @@ use axum::{
 };
 
 pub mod user;
+pub mod utils;
 
-pub enum ApiError {
+pub enum AppError {
     INTERNAL(anyhow::Error),
 }
 
-impl IntoResponse for ApiError {
+impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -19,7 +20,7 @@ impl IntoResponse for ApiError {
     }
 }
 
-impl<E> From<E> for ApiError
+impl<E> From<E> for AppError
 where
     E: Into<anyhow::Error>,
 {
