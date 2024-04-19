@@ -9,9 +9,9 @@ POST {{host}}/register HTTP/1.1
 content-type: application/json
 
 {
-    "email": "p@qq.com",
+    "email": "q@qq.com",
     "password": "123456",
-    "username": "p"
+    "username": "q"
 }
 
 
@@ -25,3 +25,18 @@ GET {{host}}/user/list HTTP/1.1
 
 ### Hashed Password Verify
 GET {{host}}/verify/654321 HTTP/1.1
+
+
+### Topic Initiate
+POST {{host}}/topic/initiate HTTP/1.1
+content-type: application/json
+
+{
+    "content": "🎉️ 🎉️ 🎉️ See how the exact same Medium.com clone (called Conduit) is built using different frontends and backends. Yes, you can mix and match them, because they all adhere to the same API spec ❤️ ❤️ ❤️",
+    "title": "Welcome to RealWorld project",
+    "user_id": "5cc351cb-07b0-49e0-a90f-d1d7961112d1"
+}
+
+
+### Topic Detail
+GET {{host}}/topic/ae12ff6e-01f8-455e-bcc6-7dac018cc2da HTTP/1.1

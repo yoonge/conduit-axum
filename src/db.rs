@@ -16,7 +16,6 @@ pub async fn establish_connection() -> Pool<Postgres> {
 
 #[derive(Debug, Deserialize, FromRow, Serialize)]
 pub struct User {
-    pub id: Uuid,
     pub avatar: String,
     pub bio: String,
     pub birthday: String,
@@ -26,10 +25,26 @@ pub struct User {
     pub favorite: Vec<Uuid>,
     // 1: male, 0: female, -1: secret
     pub gender: i16,
+    pub _id: Uuid,
     pub nickname: String,
     #[sqlx(default)]
     pub password: Option<String>,
     pub phone: String,
     pub position: String,
     pub username: String,
+}
+
+#[derive(Debug, Deserialize, FromRow, Serialize)]
+pub struct Topic {
+    pub comments: Vec<Uuid>,
+    pub content: String,
+    #[serde(with = "date_formatter")]
+    pub create_at: OffsetDateTime,
+    pub favorite: i32,
+    pub _id: Uuid,
+    pub tags: Vec<String>,
+    pub title: String,
+    #[serde(with = "date_formatter")]
+    pub update_at: OffsetDateTime,
+    pub user_id: Uuid,
 }
