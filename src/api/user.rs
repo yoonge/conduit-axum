@@ -38,7 +38,7 @@ pub async fn create_user(
     Ok(Json(res))
 }
 
-pub async fn query_user(pool: Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
+pub async fn _query_user(pool: Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
     let user: User = sqlx::query_as(
         r#"
             select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
