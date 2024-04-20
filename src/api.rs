@@ -2,10 +2,24 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use serde::Serialize;
 
 pub mod topic;
 pub mod user;
 pub mod utils;
+
+#[derive(Debug, Serialize)]
+pub struct AppResponse<T: Serialize> {
+    code: u16,
+    data: T,
+    msg: String,
+}
+
+impl<T: Serialize> AppResponse<T> {
+    pub fn new(code: u16, data: T, msg: String) -> Self {
+        Self { code, data, msg }
+    }
+}
 
 pub enum AppError {
     INTERNAL(anyhow::Error),
