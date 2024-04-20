@@ -3,12 +3,11 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde_json::json;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-use super::{AppError, AppResponse, user};
-use crate::db::{NewTopic, Topic, User};
+use super::{AppError, AppResponse};
+use crate::db::{NewTopic, Topic};
 
 pub async fn create_topic(
     State(pool): State<Pool<Postgres>>,
@@ -44,8 +43,14 @@ pub async fn get_topic(
 ) -> Result<Json<AppResponse<Topic>>, AppError> {
     let topic: Topic = sqlx::query_as(
         r#"
-            select comments, content, create_at, favorite, _id, tags, title, update_at, user_id
-            from topics
+            select comments, content, create_at, favorite, _id, tags, title, update_at, user_id, (
+                select row_to_json(u) from (
+                    select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
+                    from users
+                    where _id = t.user_id
+                ) u
+            ) as user
+            from topics t
             where _id = $1
         "#,
     )
@@ -53,15 +58,11 @@ pub async fn get_topic(
     .fetch_one(&pool)
     .await?;
 
-    let user: User = user::query_user(pool, topic.user_id).await?;
-
-    let mut res = AppResponse::new(
+    let res = AppResponse::new(
         StatusCode::OK.into(),
         topic,
         "User query succeed.".to_string(),
     );
-
-    res.data.user = Some(json!(user));
 
     println!("{:?}\n", res);
 
@@ -73,8 +74,14 @@ pub async fn get_topics(
 ) -> Result<Json<AppResponse<Vec<Topic>>>, AppError> {
     let topics: Vec<Topic> = sqlx::query_as(
         r#"
-            select comments, content, create_at, favorite, _id, tags, title, update_at, user_id
-            from topics
+            select comments, content, create_at, favorite, _id, tags, title, update_at, user_id, (
+                select row_to_json(u) from (
+                    select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
+                    from users
+                    where _id = t.user_id
+                ) u
+            ) as user
+            from topics t
         "#
     )
     .fetch_all(&pool)
