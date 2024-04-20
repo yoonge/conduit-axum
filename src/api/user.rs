@@ -1,24 +1,18 @@
 use axum::{
     extract::{Path, State},
+    http::StatusCode,
     Json,
 };
-use serde::Deserialize;
 use sqlx::{Pool, Postgres};
+use uuid::Uuid;
 
-use crate::api::{utils::password, AppError};
-use crate::db::User;
-
-#[derive(Deserialize)]
-pub struct NewUser {
-    pub email: String,
-    pub password: String,
-    pub username: String,
-}
+use super::{utils::password, AppError, AppResponse};
+use crate::db::{NewUser, User};
 
 pub async fn create_user(
     State(pool): State<Pool<Postgres>>,
     Json(new_user): Json<NewUser>,
-) -> Result<Json<User>, AppError> {
+) -> Result<Json<AppResponse<User>>, AppError> {
     let hashed_password = password::hash(new_user.password).await?;
     let user: User = sqlx::query_as(
         r#"
@@ -33,15 +27,35 @@ pub async fn create_user(
     .fetch_one(&pool)
     .await?;
 
-    println!("{:?}", user);
+    let res = AppResponse::new(
+        StatusCode::CREATED.into(),
+        user,
+        "User create succeed.".to_string(),
+    );
 
-    Ok(Json(user))
+    println!("{:?}", res);
+
+    Ok(Json(res))
+}
+
+pub async fn query_user(pool: Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
+    let user: User = sqlx::query_as(
+        r#"
+            select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
+            from users
+            where _id = $1
+        "#
+    ).bind(&user_id)
+    .fetch_one(&pool)
+    .await?;
+
+    Ok(user)
 }
 
 pub async fn get_user(
     State(pool): State<Pool<Postgres>>,
     Path(username): Path<String>,
-) -> Result<Json<User>, AppError> {
+) -> Result<Json<AppResponse<User>>, AppError> {
     let user: User = sqlx::query_as(
         r#"
             select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
@@ -52,12 +66,20 @@ pub async fn get_user(
     .fetch_one(&pool)
     .await?;
 
-    println!("{:?}", user);
+    let res = AppResponse::new(
+        StatusCode::OK.into(),
+        user,
+        "User query succeed.".to_string(),
+    );
 
-    Ok(Json(user))
+    println!("{:?}", res);
+
+    Ok(Json(res))
 }
 
-pub async fn get_users(State(pool): State<Pool<Postgres>>) -> Result<Json<Vec<User>>, AppError> {
+pub async fn get_users(
+    State(pool): State<Pool<Postgres>>,
+) -> Result<Json<AppResponse<Vec<User>>>, AppError> {
     let users: Vec<User> = sqlx::query_as(
         r#"
             select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
@@ -67,9 +89,15 @@ pub async fn get_users(State(pool): State<Pool<Postgres>>) -> Result<Json<Vec<Us
     .fetch_all(&pool)
     .await?;
 
-    println!("{:?}", users);
+    let res = AppResponse::new(
+        StatusCode::OK.into(),
+        users,
+        "Users query succeed.".to_string(),
+    );
 
-    Ok(Json(users))
+    println!("{:?}", res);
+
+    Ok(Json(res))
 }
 
 pub async fn verify_pwd(password: String) -> Result<String, AppError> {

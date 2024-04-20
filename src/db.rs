@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool, Pool, Postgres};
+use sqlx::{FromRow, PgPool, Pool, Postgres, types::JsonValue};
 use std::env;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -12,6 +12,13 @@ pub async fn establish_connection() -> Pool<Postgres> {
         .await
         .expect("Failed to connect to database.");
     pool
+}
+
+#[derive(Deserialize)]
+pub struct NewUser {
+    pub email: String,
+    pub password: String,
+    pub username: String,
 }
 
 #[derive(Debug, Deserialize, FromRow, Serialize)]
@@ -34,6 +41,13 @@ pub struct User {
     pub username: String,
 }
 
+#[derive(Deserialize)]
+pub struct NewTopic {
+    pub content: String,
+    pub title: String,
+    pub user_id: Uuid,
+}
+
 #[derive(Debug, Deserialize, FromRow, Serialize)]
 pub struct Topic {
     pub comments: Vec<Uuid>,
@@ -47,4 +61,6 @@ pub struct Topic {
     #[serde(with = "date_formatter")]
     pub update_at: OffsetDateTime,
     pub user_id: Uuid,
+    #[sqlx(default)]
+    pub user: Option<JsonValue>
 }

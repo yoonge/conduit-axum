@@ -27,7 +27,7 @@ async fn main() {
     let pool = db::establish_connection().await;
 
     let app = Router::new()
-        .route("/api", get(root))
+        .route("/api/", get(api::topic::get_topics))
         .route("/api/register", post(api::user::create_user))
         .route("/api/user/:username", get(api::user::get_user))
         .route("/api/user/list", get(api::user::get_users))
@@ -41,11 +41,6 @@ async fn main() {
     info!("listening on {}", addr);
     let listener = TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
-}
-
-// basic handler that responds with a static string
-async fn root() -> &'static str {
-    "Hello, World!"
 }
 
 // fn internal_error<E>(err: E) -> (StatusCode, String)
