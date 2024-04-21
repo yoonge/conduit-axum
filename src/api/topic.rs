@@ -17,7 +17,7 @@ pub async fn create_topic(
         r#"
             insert into topics (content, title, user_id)
             values ($1, $2, $3)
-            returning *
+            returning _id, comments, content, create_at, favorite, tags, title, update_at, user_id
         "#,
     )
     .bind(&new_topic.content)
@@ -26,13 +26,13 @@ pub async fn create_topic(
     .fetch_one(&pool)
     .await?;
 
-    let res = AppResponse::new(
-        StatusCode::CREATED.into(),
-        topic,
-        "Topic create succeed.".to_string(),
-    );
+    let res = AppResponse {
+        code: StatusCode::CREATED.into(),
+        data: { topic },
+        msg: "Topic create succeed.".to_string(),
+    };
 
-    println!("{:?}", res);
+    println!("\n{:?}\n", res);
 
     Ok(Json(res))
 }
@@ -43,9 +43,9 @@ pub async fn get_topic(
 ) -> Result<Json<AppResponse<Topic>>, AppError> {
     let topic: Topic = sqlx::query_as(
         r#"
-            select comments, content, create_at, favorite, _id, tags, title, update_at, user_id, (
+            select _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
                 select row_to_json(u) from (
-                    select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
+                    select _id, avatar, bio, birthday, to_char(create_at, 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, username
                     from users
                     where _id = t.user_id
                 ) u
@@ -58,13 +58,13 @@ pub async fn get_topic(
     .fetch_one(&pool)
     .await?;
 
-    let res = AppResponse::new(
-        StatusCode::OK.into(),
-        topic,
-        "User query succeed.".to_string(),
-    );
+    let res = AppResponse {
+        code: StatusCode::OK.into(),
+        data: { topic },
+        msg: "User query succeed.".to_string(),
+    };
 
-    println!("{:?}\n", res);
+    println!("\n{:?}\n", res);
 
     Ok(Json(res))
 }
@@ -74,9 +74,9 @@ pub async fn get_topics(
 ) -> Result<Json<AppResponse<Vec<Topic>>>, AppError> {
     let topics: Vec<Topic> = sqlx::query_as(
         r#"
-            select comments, content, create_at, favorite, _id, tags, title, update_at, user_id, (
+            select _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
                 select row_to_json(u) from (
-                    select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
+                    select _id, avatar, bio, birthday, to_char(create_at, 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, username
                     from users
                     where _id = t.user_id
                 ) u
@@ -87,13 +87,13 @@ pub async fn get_topics(
     .fetch_all(&pool)
     .await?;
 
-    let res = AppResponse::new(
-        StatusCode::OK.into(),
-        topics,
-        "Topics query succeed.".to_string(),
-    );
+    let res = AppResponse {
+        code: StatusCode::OK.into(),
+        data: { topics },
+        msg: "Topics query succeed.".to_string(),
+    };
 
-    println!("{:?}", res);
+    println!("\n{:?}\n", res);
 
     Ok(Json(res))
 }

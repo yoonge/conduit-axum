@@ -18,7 +18,7 @@ pub async fn create_user(
         r#"
             insert into users (email, password, username)
             values ($1, $2, $3)
-            returning *
+            returning _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, password, phone, position, username
         "#,
     )
     .bind(&new_user.email)
@@ -27,13 +27,13 @@ pub async fn create_user(
     .fetch_one(&pool)
     .await?;
 
-    let res = AppResponse::new(
-        StatusCode::CREATED.into(),
-        user,
-        "User create succeed.".to_string(),
-    );
+    let res = AppResponse {
+        code: StatusCode::CREATED.into(),
+        data: { user },
+        msg: "User create succeed.".to_string(),
+    };
 
-    println!("{:?}", res);
+    println!("\n{:?}\n", res);
 
     Ok(Json(res))
 }
@@ -41,7 +41,7 @@ pub async fn create_user(
 pub async fn _query_user(pool: Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
     let user: User = sqlx::query_as(
         r#"
-            select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
+            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, username
             from users
             where _id = $1
         "#
@@ -58,7 +58,7 @@ pub async fn get_user(
 ) -> Result<Json<AppResponse<User>>, AppError> {
     let user: User = sqlx::query_as(
         r#"
-            select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
+            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, username
             from users
             where username = $1
         "#
@@ -66,13 +66,13 @@ pub async fn get_user(
     .fetch_one(&pool)
     .await?;
 
-    let res = AppResponse::new(
-        StatusCode::OK.into(),
-        user,
-        "User query succeed.".to_string(),
-    );
+    let res = AppResponse {
+        code: StatusCode::OK.into(),
+        data: { user },
+        msg: "User query succeed.".to_string(),
+    };
 
-    println!("{:?}", res);
+    println!("\n{:?}\n", res);
 
     Ok(Json(res))
 }
@@ -82,20 +82,20 @@ pub async fn get_users(
 ) -> Result<Json<AppResponse<Vec<User>>>, AppError> {
     let users: Vec<User> = sqlx::query_as(
         r#"
-            select avatar, bio, birthday, create_at, email, favorite, gender, _id, nickname, phone, position, username
+            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, username
             from users
         "#
     )
     .fetch_all(&pool)
     .await?;
 
-    let res = AppResponse::new(
-        StatusCode::OK.into(),
-        users,
-        "Users query succeed.".to_string(),
-    );
+    let res = AppResponse {
+        code: StatusCode::OK.into(),
+        data: { users },
+        msg: "Users query succeed.".to_string(),
+    };
 
-    println!("{:?}", res);
+    println!("\n{:?}\n", res);
 
     Ok(Json(res))
 }

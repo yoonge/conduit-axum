@@ -15,12 +15,6 @@ pub struct AppResponse<T: Serialize> {
     msg: String,
 }
 
-impl<T: Serialize> AppResponse<T> {
-    pub fn new(code: u16, data: T, msg: String) -> Self {
-        Self { code, data, msg }
-    }
-}
-
 pub enum AppError {
     INTERNAL(anyhow::Error),
 }
