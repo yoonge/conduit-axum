@@ -11,6 +11,8 @@ use tracing_subscriber::fmt::time::OffsetTime;
 mod api;
 mod db;
 
+use self::api::{topic, user};
+
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
@@ -35,13 +37,13 @@ async fn main() {
     let pool = db::establish_connection().await;
 
     let app = Router::new()
-        .route("/api/", get(api::topic::get_topics))
-        .route("/api/register", post(api::user::create_user))
-        .route("/api/user/:username", get(api::user::get_user))
-        .route("/api/user/list", get(api::user::get_users))
-        .route("/api/verify/:password", get(api::user::verify_pwd))
-        .route("/api/topic/initiate", post(api::topic::create_topic))
-        .route("/api/topic/:topic_id", get(api::topic::get_topic))
+        .route("/api/", get(topic::get_topics))
+        .route("/api/register", post(user::create_user))
+        .route("/api/user/:username", get(user::get_user))
+        .route("/api/user/list", get(user::get_users))
+        .route("/api/verify/:password", get(user::verify_pwd))
+        .route("/api/topic/initiate", post(topic::create_topic))
+        .route("/api/topic/:topic_id", get(topic::get_topic))
         .with_state(pool)
         .layer(trace_layer);
 
