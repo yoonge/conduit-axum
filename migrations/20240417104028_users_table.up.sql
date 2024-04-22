@@ -13,7 +13,19 @@ create table if not exists users (
     password TEXT NOT NULL,
     phone TEXT NOT NULL DEFAULT '',
     position TEXT NOT NULL DEFAULT '',
+    update_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     username TEXT NOT NULL
 );
+
+create or replace function update_at_column() returns trigger as $$
+begin
+    new.update_at = now();
+    return new;
+end;
+$$ language plpgsql;
+
+create trigger users_update_at_trigger
+before update on users
+for each row execute procedure update_at_column();
 
 create unique index if not exists users_username_create_at_index on users(username, create_at desc);
