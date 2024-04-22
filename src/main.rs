@@ -2,9 +2,11 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use time::{macros::format_description, UtcOffset};
 use tokio::net::TcpListener;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tracing::{info, Level};
+use tracing_subscriber::fmt::time::OffsetTime;
 
 mod api;
 mod db;
@@ -13,8 +15,14 @@ mod db;
 async fn main() {
     dotenvy::dotenv().ok();
 
+    let timer = OffsetTime::new(
+        UtcOffset::from_hms(8, 0, 0).unwrap(),
+        format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond digits:3]"),
+    );
+
     // initialize tracing
     tracing_subscriber::fmt()
+        .with_timer(timer)
         .with_target(false)
         .compact()
         .init();

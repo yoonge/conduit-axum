@@ -4,7 +4,8 @@
 GET {{host}}/ HTTP/1.1
 
 
-### Register
+### User Register
+# @name user_register
 POST {{host}}/register HTTP/1.1
 content-type: application/json
 
@@ -16,6 +17,7 @@ content-type: application/json
 
 
 ### User Info
+# @name user_info
 GET {{host}}/user/q HTTP/1.1
 
 
@@ -28,15 +30,16 @@ GET {{host}}/verify/654321 HTTP/1.1
 
 
 ### Topic Initiate
+# @name topic_initiate
 POST {{host}}/topic/initiate HTTP/1.1
 content-type: application/json
 
 {
     "content": "🎉️ 🎉️ 🎉️ See how the exact same Medium.com clone (called Conduit) is built using different frontends and backends. Yes, you can mix and match them, because they all adhere to the same API spec ❤️ ❤️ ❤️",
     "title": "Welcome to RealWorld project",
-    "user_id": "5cc351cb-07b0-49e0-a90f-d1d7961112d1"
+    "user_id": "593516e6-9071-4ed8-97b0-afdfb539c9a0"
 }
 
 
 ### Topic Detail
-GET {{host}}/topic/ae12ff6e-01f8-455e-bcc6-7dac018cc2da HTTP/1.1
+GET {{host}}/topic/{{topic_initiate.response.body.$.data.topic._id}} HTTP/1.1

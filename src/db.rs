@@ -38,6 +38,8 @@ pub struct User {
     pub password: Option<String>,
     pub phone: String,
     pub position: String,
+    #[serde(with = "date_formatter")]
+    pub update_at: OffsetDateTime,
     pub username: String,
 }
 
