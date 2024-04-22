@@ -3,7 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde_json::{json, to_value, Map, Value};
+use serde_json::{json, Map, Value};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
@@ -29,11 +29,10 @@ pub async fn create_topic(
 
     let mut data = Map::new();
     data.insert("topic".to_string(), json!(&topic));
-    let data = to_value(data)?;
 
     let res = AppResponse {
         code: StatusCode::CREATED.into(),
-        data,
+        data: json!(data),
         msg: "Topic create succeed.".to_string(),
     };
 
@@ -65,11 +64,10 @@ pub async fn get_topic(
 
     let mut data = Map::new();
     data.insert("topic".to_string(), json!(&topic));
-    let data = to_value(data)?;
 
     let res = AppResponse {
         code: StatusCode::OK.into(),
-        data,
+        data: json!(data),
         msg: "User query succeed.".to_string(),
     };
 
@@ -108,11 +106,10 @@ pub async fn get_topics(
     let mut data = Map::new();
     data.insert("topics".to_string(), json!(&topics));
     data.insert("total".to_string(), json!(&total));
-    let data = to_value(data)?;
 
     let res = AppResponse {
         code: StatusCode::OK.into(),
-        data,
+        data: json!(data),
         msg: "Topics query succeed.".to_string(),
     };
 

@@ -8,6 +8,8 @@ pub mod topic;
 pub mod user;
 pub mod utils;
 
+use self::utils::jwt::AuthError;
+
 #[derive(Debug, Serialize)]
 pub struct AppResponse<T: Serialize> {
     code: u16,
@@ -16,7 +18,8 @@ pub struct AppResponse<T: Serialize> {
 }
 
 pub enum AppError {
-    INTERNAL(anyhow::Error),
+    Auth(AuthError),
+    Internal(anyhow::Error),
 }
 
 impl IntoResponse for AppError {
@@ -34,6 +37,12 @@ where
     E: Into<anyhow::Error>,
 {
     fn from(err: E) -> Self {
-        Self::INTERNAL(err.into())
+        Self::Internal(err.into())
+    }
+}
+
+impl From<AuthError> for AppError {
+    fn from(err: AuthError) -> Self {
+        Self::Auth(err)
     }
 }
