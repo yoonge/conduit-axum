@@ -21,7 +21,7 @@ pub struct NewUser {
     pub username: String,
 }
 
-#[derive(Debug, Deserialize, FromRow, Serialize)]
+#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
 pub struct User {
     pub avatar: String,
     pub bio: String,

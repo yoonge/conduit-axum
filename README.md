@@ -1,11 +1,11 @@
 # ⌨️ Conduit Axum
 
-![version](https://img.shields.io/badge/version-0.1.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![axum](https://img.shields.io/badge/axum-0.7.5-a21caf.svg) ![jwt](https://img.shields.io/badge/jwt-9.3.0-d63aff.svg) ![postgresql](https://img.shields.io/badge/postgresql-16.2-336792.svg) ![rust](https://img.shields.io/badge/rust-1.77.1-black.svg) ![sqlx](https://img.shields.io/badge/sqlx-0.7.4-orange.svg) ![cargo](https://img.shields.io/badge/cargo-1.77.1-black.svg)
+![version](https://img.shields.io/badge/version-0.1.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![axum](https://img.shields.io/badge/axum-0.7.5-a21caf.svg) ![jsonwebtoken](https://img.shields.io/badge/jsonwebtoken-9.3.0-d63aff.svg) ![postgresql](https://img.shields.io/badge/postgresql-16.2-336792.svg) ![rust](https://img.shields.io/badge/rust-1.77.1-black.svg) ![sqlx](https://img.shields.io/badge/sqlx-0.7.4-orange.svg) ![cargo](https://img.shields.io/badge/cargo-1.77.1-black.svg)
 
 
 ## 💡 Introduction
 
-Realworld: "The mother of all demo apps" — Exemplary SSR fullstack Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-axum)), built with Axum + JWT + PostgreSQL + SQLx.
+Realworld: "The mother of all demo apps" — Exemplary SSR fullstack Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-axum)), built with Axum + jsonwebtoken + PostgreSQL + SQLx.
 
 Besides，this repository also provides RESTful APIs for [Conduit React](https://github.com/yoonge/conduit-react).
 
@@ -19,6 +19,9 @@ $ cd conduit-axum
 
 # Change the URL with your own username, password and database_name
 $ echo "DATABASE_URL=postgresql://username:password@localhost:5432/database_name" > .env
+
+# Change with your own secret
+$ echo "JWT_SECRET=yoonge.github.io" >> .env
 
 $ echo "RUST_LOG=debug" >> .env
 

@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 
-pub static Keys: Lazy<Keys> = Lazy::new(|| {
+pub static KEYS: Lazy<Keys> = Lazy::new(|| {
     let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     Keys::new(secret.as_bytes())
 });
@@ -46,16 +46,18 @@ pub struct AuthPayload {
 pub struct Claims {
     pub cuid: Uuid,
     pub exp: usize,
+    pub nickname: String,
     pub username: String,
 }
 
 impl Claims {
-    pub fn new(cuid: Uuid, username: String) -> Self {
+    pub fn new(cuid: Uuid, nickname: String, username: String) -> Self {
         let exp = SystemTime::now() + Duration::from_secs(24 * 60 * 60);
         let exp = exp.duration_since(UNIX_EPOCH).unwrap().as_secs() as usize;
         Self {
             cuid,
             exp,
+            nickname,
             username,
         }
     }
@@ -74,43 +76,43 @@ where
             .await
             .map_err(|_| AuthError::MissingCredentials)?;
 
-        let token_data = decode::<Claims>(bearer.token(), &Keys.decoding, &Validation::default())
+        let token_data = decode::<Claims>(bearer.token(), &KEYS.decoding, &Validation::default())
             .map_err(|_| AuthError::InvalidToken)?;
 
         Ok(token_data.claims)
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct AuthBody {
-    token: String,
-    token_type: String,
-}
+// #[derive(Debug, Serialize)]
+// pub struct AuthBody {
+//     token: String,
+//     token_type: String,
+// }
 
-impl AuthBody {
-    pub fn new(token: String) -> Self {
-        Self {
-            token,
-            token_type: "Bearer".to_string(),
-        }
-    }
-}
+// impl AuthBody {
+//     pub fn new(token: String) -> Self {
+//         Self {
+//             token,
+//             token_type: "Bearer".to_string(),
+//         }
+//     }
+// }
 
 #[derive(Debug, Serialize)]
 pub enum AuthError {
+    InvalidCredentials,
     InvalidToken,
     MissingCredentials,
     TokenCreation,
-    WrongCredentials,
 }
 
 impl IntoResponse for AuthError {
     fn into_response(self) -> Response {
         let (code, msg) = match self {
+            Self::InvalidCredentials => (StatusCode::UNAUTHORIZED, "Invalid credentials."),
             Self::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token."),
             Self::MissingCredentials => (StatusCode::UNAUTHORIZED, "Missing credentials."),
             Self::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error."),
-            Self::WrongCredentials => (StatusCode::UNAUTHORIZED, "Wrong credentials."),
         };
         let body = Json(json!({ "err": msg }));
         (code, body).into_response()

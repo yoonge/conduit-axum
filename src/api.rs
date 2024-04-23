@@ -24,11 +24,13 @@ pub enum AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong."),
-        )
-            .into_response()
+        match self {
+            Self::Auth(err) => err.into_response(),
+            Self::Internal(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Something went wrong: {}.", err),
+            ).into_response(),
+        }
     }
 }
 
