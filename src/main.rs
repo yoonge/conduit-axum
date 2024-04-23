@@ -39,6 +39,7 @@ async fn main() {
     let app = Router::new()
         .route("/api/", get(topic::get_topics))
         .route("/api/register", post(user::create_user))
+        .route("/api/login", post(user::login))
         .route("/api/user/:username", get(user::get_user))
         .route("/api/user/list", get(user::get_users))
         .route("/api/verify/:password", get(user::verify_pwd))
