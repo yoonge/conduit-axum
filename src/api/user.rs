@@ -3,12 +3,39 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use jsonwebtoken::{encode, Header};
 use serde_json::{json, Map, Value};
 use sqlx::{Pool, Postgres};
-use uuid::Uuid;
+use uuid::{uuid, Uuid};
 
-use super::{utils::password, AppError, AppResponse};
+use super::{
+    utils::{
+        jwt::{AuthBody, AuthError, AuthPayload, Claims, Keys},
+        password,
+    },
+    AppError, AppResponse,
+};
 use crate::db::{NewUser, User};
+
+pub async fn login(
+    State(_pool): State<Pool<Postgres>>,
+    Json(payload): Json<AuthPayload>,
+) -> Result<Json<AuthBody>, AuthError> {
+    if payload.email.is_empty() || payload.password.is_empty() {
+        return Err(AuthError::MissingCredentials);
+    }
+
+    if payload.email != "q@qq.com" || payload.password != "123456" {
+        return Err(AuthError::WrongCredentials);
+    }
+
+    let claims = Claims::new(uuid!("593516e6-9071-4ed8-97b0-afdfb539c9a0"), "q".to_string());
+
+    let token = encode(&Header::default(), &claims, &Keys.encoding)
+        .map_err(|_| AuthError::TokenCreation)?;
+
+    Ok(Json(AuthBody::new(token)))
+}
 
 pub async fn create_user(
     State(pool): State<Pool<Postgres>>,

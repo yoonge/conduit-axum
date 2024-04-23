@@ -16,6 +16,17 @@ content-type: application/json
 }
 
 
+### User Login
+# @name user_login
+POST {{host}}/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "q@qq.com",
+    "password": "123456"
+}
+
+
 ### User Info
 # @name user_info
 GET {{host}}/user/q HTTP/1.1
