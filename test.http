@@ -30,19 +30,18 @@ content-type: application/json
 ### User Info
 # @name user_info
 GET {{host}}/user/q HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.data.token}}
 
 
 ### Users List
 GET {{host}}/user/list HTTP/1.1
-
-
-### Hashed Password Verify
-GET {{host}}/verify/654321 HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.data.token}}
 
 
 ### Topic Initiate
 # @name topic_initiate
 POST {{host}}/topic/initiate HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.data.token}}
 content-type: application/json
 
 {

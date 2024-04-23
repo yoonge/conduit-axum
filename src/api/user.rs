@@ -6,11 +6,11 @@ use axum::{
 use jsonwebtoken::{encode, Header};
 use serde_json::{json, Map, Value};
 use sqlx::{Pool, Postgres};
-use uuid::{uuid, Uuid};
+use uuid::Uuid;
 
 use super::{
     utils::{
-        jwt::{AuthBody, AuthError, AuthPayload, Claims, Keys},
+        jwt::{AuthError, AuthPayload, Claims, KEYS},
         password,
     },
     AppError, AppResponse,
@@ -20,24 +20,46 @@ use crate::db::{NewUser, User};
 pub async fn login(
     State(_pool): State<Pool<Postgres>>,
     Json(payload): Json<AuthPayload>,
-) -> Result<Json<AuthBody>, AuthError> {
+) -> Result<Json<AppResponse<Value>>, AppError> {
     if payload.email.is_empty() || payload.password.is_empty() {
-        return Err(AuthError::MissingCredentials);
+        return Err(AppError::Auth(AuthError::MissingCredentials));
     }
 
-    if payload.email != "q@qq.com" || payload.password != "123456" {
-        return Err(AuthError::WrongCredentials);
-    }
+    let hashed_password = password::hash(payload.password).await?;
+    let user: User = sqlx::query_as(
+        r#"
+            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
+            from users
+            where email = $1 and password = $2
+        "#
+    )
+    .bind(&payload.email)
+    .bind(&hashed_password)
+    .fetch_one(&_pool)
+    .await
+    .map_err(|_| AppError::Auth(AuthError::InvalidCredentials))?;
 
-    let claims = Claims::new(uuid!("593516e6-9071-4ed8-97b0-afdfb539c9a0"), "q".to_string());
-
-    let token = encode(&Header::default(), &claims, &Keys.encoding)
+    let user_clone = user.clone();
+    let claims = Claims::new(user_clone._id, user_clone.nickname, user_clone.username);
+    let token = encode(&Header::default(), &claims, &KEYS.encoding)
         .map_err(|_| AuthError::TokenCreation)?;
 
-    Ok(Json(AuthBody::new(token)))
+    let mut data = Map::new();
+    data.insert("token".to_string(), json!(token));
+    data.insert("user".to_string(), json!(&user));
+
+    let res = AppResponse {
+        code: StatusCode::OK.into(),
+        data: json!(data),
+        msg: "User login succeed.".to_string(),
+    };
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(res))
 }
 
-pub async fn create_user(
+pub async fn register(
     State(pool): State<Pool<Postgres>>,
     Json(new_user): Json<NewUser>,
 ) -> Result<Json<AppResponse<Value>>, AppError> {
@@ -55,7 +77,13 @@ pub async fn create_user(
     .fetch_one(&pool)
     .await?;
 
+    let user_clone = user.clone();
+    let claims = Claims::new(user_clone._id, user_clone.nickname, user_clone.username);
+    let token = encode(&Header::default(), &claims, &KEYS.encoding)
+        .map_err(|_| AuthError::TokenCreation)?;
+
     let mut data = Map::new();
+    data.insert("token".to_string(), json!(token));
     data.insert("user".to_string(), json!(&user));
 
     let res = AppResponse {
@@ -69,7 +97,13 @@ pub async fn create_user(
     Ok(Json(res))
 }
 
-pub async fn _query_user(pool: Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
+pub async fn _query_user(
+    _claims: Claims,
+    pool: Pool<Postgres>,
+    user_id: Uuid,
+) -> Result<User, AppError> {
+    println!("\n{:?}\n", _claims);
+
     let user: User = sqlx::query_as(
         r#"
             select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
@@ -84,9 +118,12 @@ pub async fn _query_user(pool: Pool<Postgres>, user_id: Uuid) -> Result<User, Ap
 }
 
 pub async fn get_user(
+    _claims: Claims,
     State(pool): State<Pool<Postgres>>,
     Path(username): Path<String>,
 ) -> Result<Json<AppResponse<Value>>, AppError> {
+    println!("\n{:?}\n", _claims);
+
     let user: User = sqlx::query_as(
         r#"
             select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
@@ -112,8 +149,11 @@ pub async fn get_user(
 }
 
 pub async fn get_users(
+    _claims: Claims,
     State(pool): State<Pool<Postgres>>,
 ) -> Result<Json<AppResponse<Value>>, AppError> {
+    println!("\n{:?}\n", _claims);
+
     let users: Vec<User> = sqlx::query_as(
         r#"
             select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
@@ -135,11 +175,4 @@ pub async fn get_users(
     println!("\n{:?}\n", res);
 
     Ok(Json(res))
-}
-
-pub async fn verify_pwd(password: String) -> Result<String, AppError> {
-    let pwd = password::hash(password.clone()).await?;
-    let res = password::verify(password, pwd).await?;
-
-    Ok(res.to_string())
 }

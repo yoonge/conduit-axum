@@ -38,18 +38,17 @@ async fn main() {
 
     let app = Router::new()
         .route("/api/", get(topic::get_topics))
-        .route("/api/register", post(user::create_user))
+        .route("/api/register", post(user::register))
         .route("/api/login", post(user::login))
         .route("/api/user/:username", get(user::get_user))
         .route("/api/user/list", get(user::get_users))
-        .route("/api/verify/:password", get(user::verify_pwd))
         .route("/api/topic/initiate", post(topic::create_topic))
         .route("/api/topic/:topic_id", get(topic::get_topic))
         .with_state(pool)
         .layer(trace_layer);
 
     let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3001));
-    info!("listening on {}", addr);
+    info!("Server listening on {}", addr);
     let listener = TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

@@ -3,16 +3,17 @@ use tokio::task;
 
 use argon2::{
     password_hash::{self, SaltString},
-    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier
 };
 
 pub async fn hash(password: String) -> anyhow::Result<String> {
     task::spawn_blocking(move || {
-        let salt = SaltString::generate(&mut rand::thread_rng());
+        let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+        let salt_str = SaltString::encode_b64(&secret.as_bytes()).unwrap();
 
         anyhow::Ok(
             Argon2::default()
-                .hash_password(password.as_bytes(), &salt)
+                .hash_password(password.as_bytes(), &salt_str)
                 .map_err(|e| anyhow!(e).context("Failed to hash password."))?
                 .to_string(),
         )
@@ -21,7 +22,7 @@ pub async fn hash(password: String) -> anyhow::Result<String> {
     .context("Panic in password hash().")
 }
 
-pub async fn verify(password: String, hash: String) -> anyhow::Result<bool> {
+pub async fn _verify(password: String, hash: String) -> anyhow::Result<bool> {
     task::spawn_blocking(move || {
         let hash = PasswordHash::new(&hash)
             .map_err(|e| anyhow!(e).context("BUG: Password hash is invalid."))?;
