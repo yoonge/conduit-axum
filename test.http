@@ -4,6 +4,9 @@
 ### Homepage
 GET {{host}}/ HTTP/1.1
 
+### Homepage Page 2
+GET {{host}}/?page=2 HTTP/1.1
+
 
 ### User Register
 POST {{host}}/register HTTP/1.1
@@ -38,6 +41,11 @@ GET {{host}}/user/list HTTP/1.1
 Authorization: Bearer {{user_login.response.body.$.token}}
 
 
+### User Settings
+GET {{host}}/settings HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
+
+
 ### Topic Initiate
 # @name topic_initiate
 POST {{host}}/topic/initiate HTTP/1.1
@@ -53,3 +61,13 @@ content-type: {{json}}
 
 ### Topic Detail
 GET {{host}}/topic/59ff3777-ad5d-4539-951b-16935122cb3a HTTP/1.1
+
+
+### User Profile, Own Topics
+GET {{host}}/profile/q HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
+
+
+### User Profile, Favorites
+GET {{host}}/profile/q/favorites HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
