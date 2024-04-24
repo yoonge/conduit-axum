@@ -4,7 +4,7 @@ use std::env;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
-use crate::api::utils::date_formatter;
+use crate::api::utils::date_fmt;
 
 pub async fn establish_connection() -> Pool<Postgres> {
     let db_url = env::var("DATABASE_URL").expect("`DATABASE_URL` must be set.");
@@ -26,7 +26,7 @@ pub struct User {
     pub avatar: String,
     pub bio: String,
     pub birthday: String,
-    #[serde(with = "date_formatter")]
+    #[serde(with = "date_fmt")]
     pub create_at: OffsetDateTime,
     pub email: String,
     pub favorite: Vec<Uuid>,
@@ -38,7 +38,7 @@ pub struct User {
     pub password: Option<String>,
     pub phone: String,
     pub position: String,
-    #[serde(with = "date_formatter")]
+    #[serde(with = "date_fmt")]
     pub update_at: OffsetDateTime,
     pub username: String,
 }
@@ -50,18 +50,24 @@ pub struct NewTopic {
     pub user_id: Uuid,
 }
 
-#[derive(Debug, Deserialize, FromRow, Serialize)]
+#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
 pub struct Topic {
     pub comments: Vec<Uuid>,
     pub content: String,
-    #[serde(with = "date_formatter")]
+    #[sqlx(default)]
+    pub content_clip: Option<String>,
+    #[serde(with = "date_fmt")]
     pub create_at: OffsetDateTime,
     pub favorite: i32,
     pub _id: Uuid,
     pub tags: Vec<String>,
     pub title: String,
-    #[serde(with = "date_formatter")]
+    #[sqlx(default)]
+    pub title_clip: Option<String>,
+    #[serde(with = "date_fmt")]
     pub update_at: OffsetDateTime,
+    #[sqlx(default)]
+    pub update_at_str: Option<String>,
     pub user_id: Uuid,
     #[sqlx(default)]
     pub user: Option<JsonValue>

@@ -13,14 +13,14 @@ use super::{
         jwt::{AuthError, AuthPayload, Claims, KEYS},
         password,
     },
-    AppError, AppResponse,
+    AppError,
 };
 use crate::db::{NewUser, User};
 
 pub async fn login(
     State(_pool): State<Pool<Postgres>>,
     Json(payload): Json<AuthPayload>,
-) -> Result<Json<AppResponse<Value>>, AppError> {
+) -> Result<Json<Value>, AppError> {
     if payload.email.is_empty() || payload.password.is_empty() {
         return Err(AppError::Auth(AuthError::MissingCredentials));
     }
@@ -44,25 +44,21 @@ pub async fn login(
     let token = encode(&Header::default(), &claims, &KEYS.encoding)
         .map_err(|_| AuthError::TokenCreation)?;
 
-    let mut data = Map::new();
-    data.insert("token".to_string(), json!(token));
-    data.insert("user".to_string(), json!(&user));
-
-    let res = AppResponse {
-        code: StatusCode::OK.into(),
-        data: json!(data),
-        msg: "User login succeed.".to_string(),
-    };
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("token".to_string(), json!(token));
+    res.insert("user".to_string(), json!(&user));
+    res.insert("msg".to_string(), json!("User login succeed."));
 
     println!("\n{:?}\n", res);
 
-    Ok(Json(res))
+    Ok(Json(json!(res)))
 }
 
 pub async fn register(
     State(pool): State<Pool<Postgres>>,
     Json(new_user): Json<NewUser>,
-) -> Result<Json<AppResponse<Value>>, AppError> {
+) -> Result<Json<Value>, AppError> {
     let hashed_password = password::hash(new_user.password).await?;
     let user: User = sqlx::query_as(
         r#"
@@ -82,19 +78,15 @@ pub async fn register(
     let token = encode(&Header::default(), &claims, &KEYS.encoding)
         .map_err(|_| AuthError::TokenCreation)?;
 
-    let mut data = Map::new();
-    data.insert("token".to_string(), json!(token));
-    data.insert("user".to_string(), json!(&user));
-
-    let res = AppResponse {
-        code: StatusCode::CREATED.into(),
-        data: json!(data),
-        msg: "User create succeed.".to_string(),
-    };
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("token".to_string(), json!(token));
+    res.insert("user".to_string(), json!(&user));
+    res.insert("msg".to_string(), json!("User register succeed."));
 
     println!("\n{:?}\n", res);
 
-    Ok(Json(res))
+    Ok(Json(json!(res)))
 }
 
 pub async fn _query_user(
@@ -121,7 +113,7 @@ pub async fn get_user(
     _claims: Claims,
     State(pool): State<Pool<Postgres>>,
     Path(username): Path<String>,
-) -> Result<Json<AppResponse<Value>>, AppError> {
+) -> Result<Json<Value>, AppError> {
     println!("\n{:?}\n", _claims);
 
     let user: User = sqlx::query_as(
@@ -134,24 +126,20 @@ pub async fn get_user(
     .fetch_one(&pool)
     .await?;
 
-    let mut data = Map::new();
-    data.insert("user".to_string(), json!(&user));
-
-    let res = AppResponse {
-        code: StatusCode::OK.into(),
-        data: json!(data),
-        msg: "User query succeed.".to_string(),
-    };
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("user".to_string(), json!(&user));
+    res.insert("msg".to_string(), json!("User query succeed."));
 
     println!("\n{:?}\n", res);
 
-    Ok(Json(res))
+    Ok(Json(json!(res)))
 }
 
 pub async fn get_users(
     _claims: Claims,
     State(pool): State<Pool<Postgres>>,
-) -> Result<Json<AppResponse<Value>>, AppError> {
+) -> Result<Json<Value>, AppError> {
     println!("\n{:?}\n", _claims);
 
     let users: Vec<User> = sqlx::query_as(
@@ -163,16 +151,12 @@ pub async fn get_users(
     .fetch_all(&pool)
     .await?;
 
-    let mut data = Map::new();
-    data.insert("users".to_string(), json!(&users));
-
-    let res = AppResponse {
-        code: StatusCode::OK.into(),
-        data: json!(data),
-        msg: "Users query succeed.".to_string(),
-    };
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("users".to_string(), json!(&users));
+    res.insert("msg".to_string(), json!("Users query succeed."));
 
     println!("\n{:?}\n", res);
 
-    Ok(Json(res))
+    Ok(Json(json!(res)))
 }
