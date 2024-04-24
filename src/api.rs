@@ -9,6 +9,8 @@ pub mod utils;
 
 use self::utils::jwt::AuthError;
 
+pub static PAGE_SIZE: i32 = 10;
+
 pub enum AppError {
     Auth(AuthError),
     Internal(anyhow::Error),

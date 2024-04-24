@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     Json,
 };
@@ -13,7 +15,7 @@ use super::{
         jwt::{AuthError, AuthPayload, Claims, KEYS},
         password,
     },
-    AppError,
+    AppError, PAGE_SIZE,
 };
 use crate::db::{NewUser, User};
 
@@ -45,10 +47,10 @@ pub async fn login(
         .map_err(|_| AuthError::TokenCreation)?;
 
     let mut res = Map::new();
-    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("User login succeed."));
     res.insert("token".to_string(), json!(token));
     res.insert("user".to_string(), json!(&user));
-    res.insert("msg".to_string(), json!("User login succeed."));
 
     println!("\n{:?}\n", res);
 
@@ -79,23 +81,17 @@ pub async fn register(
         .map_err(|_| AuthError::TokenCreation)?;
 
     let mut res = Map::new();
-    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("User register succeed."));
     res.insert("token".to_string(), json!(token));
     res.insert("user".to_string(), json!(&user));
-    res.insert("msg".to_string(), json!("User register succeed."));
 
     println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
 }
 
-pub async fn _query_user(
-    _claims: Claims,
-    pool: Pool<Postgres>,
-    user_id: Uuid,
-) -> Result<User, AppError> {
-    println!("\n{:?}\n", _claims);
-
+pub async fn query_user(pool: Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
     let user: User = sqlx::query_as(
         r#"
             select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
@@ -127,9 +123,9 @@ pub async fn get_user(
     .await?;
 
     let mut res = Map::new();
-    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
-    res.insert("user".to_string(), json!(&user));
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("User query succeed."));
+    res.insert("user".to_string(), json!(&user));
 
     println!("\n{:?}\n", res);
 
@@ -139,22 +135,52 @@ pub async fn get_user(
 pub async fn get_users(
     _claims: Claims,
     State(pool): State<Pool<Postgres>>,
+    Query(args): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AppError> {
     println!("\n{:?}\n", _claims);
+    println!("\nQuery Args: {:?}\n", args);
+    let page = args
+        .get("page")
+        .unwrap_or(&"1".to_string())
+        .parse::<i32>()?;
+    let offset = (page - 1) * PAGE_SIZE;
 
     let users: Vec<User> = sqlx::query_as(
         r#"
             select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
             from users
+            order by create_at desc
+            limit $1 offset $2
         "#
     )
+    .bind(&page)
+    .bind(&offset)
     .fetch_all(&pool)
     .await?;
 
     let mut res = Map::new();
-    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
-    res.insert("users".to_string(), json!(&users));
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("Users query succeed."));
+    res.insert("page".to_string(), json!(&page));
+    res.insert("users".to_string(), json!(&users));
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(json!(res)))
+}
+
+pub async fn get_user_settings(
+    claims: Claims,
+    State(pool): State<Pool<Postgres>>,
+) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+
+    let user = query_user(pool, claims.cuid).await?;
+
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("User settings query succeed."));
+    res.insert("user".to_string(), json!(&user));
 
     println!("\n{:?}\n", res);
 

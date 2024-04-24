@@ -2,7 +2,7 @@ use time::macros::{format_description, offset};
 
 use crate::db::Topic;
 
-pub fn format(topics: &mut Vec<Topic>) -> Result<Vec<Topic>, anyhow::Error> {
+pub fn format(topics: Vec<Topic>) -> Result<Vec<Topic>, anyhow::Error> {
     let mut format_topics = vec![];
     topics.iter().for_each(|topic| {
         let topic = topic.clone();
