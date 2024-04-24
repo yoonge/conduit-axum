@@ -8,7 +8,7 @@ use argon2::{
 
 pub async fn hash(password: String) -> anyhow::Result<String> {
     task::spawn_blocking(move || {
-        let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+        let secret = std::env::var("HASH_SALT").expect("HASH_SALT must be set");
         let salt_str = SaltString::encode_b64(&secret.as_bytes()).unwrap();
 
         anyhow::Ok(

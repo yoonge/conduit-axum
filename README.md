@@ -5,9 +5,7 @@
 
 ## 💡 Introduction
 
-Realworld: "The mother of all demo apps" — Exemplary SSR fullstack Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-axum)), built with Axum + jsonwebtoken + PostgreSQL + SQLx.
-
-Besides，this repository also provides RESTful APIs for [Conduit React](https://github.com/yoonge/conduit-react).
+Realworld: "The mother of all demo apps" — Exemplary back-end Medium.com clone (called [Conduit](https://github.com/yoonge/conduit-axum)) in Rust, built with Axum + jsonwebtoken + PostgreSQL + SQLx, it provides RESTful APIs for [Conduit React](https://github.com/yoonge/conduit-react).
 
 
 ## 🔰 Getting Started
@@ -17,13 +15,8 @@ $ git clone https://github.com/yoonge/conduit-axum.git
 
 $ cd conduit-axum
 
-# Change the URL with your own username, password and database_name
-$ echo "DATABASE_URL=postgresql://username:password@localhost:5432/database_name" > .env
-
-# Change with your own secret
-$ echo "JWT_SECRET=yoonge.github.io" >> .env
-
-$ echo "RUST_LOG=debug" >> .env
+# Change `.env` file with your own username, password, database_name etc.
+$ cp .env.example .env
 
 $ cargo install sqlx-cli
 

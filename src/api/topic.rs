@@ -7,13 +7,16 @@ use serde_json::{json, Map, Value};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-use super::{AppError, AppResponse};
-use crate::db::{NewTopic, Topic};
+use super::AppError;
+use crate::{
+    api::utils::topic_fmt,
+    db::{NewTopic, Topic},
+};
 
 pub async fn create_topic(
     State(pool): State<Pool<Postgres>>,
     Json(new_topic): Json<NewTopic>,
-) -> Result<Json<AppResponse<Value>>, AppError> {
+) -> Result<Json<Value>, AppError> {
     let topic: Topic = sqlx::query_as(
         r#"
             insert into topics (content, title, user_id)
@@ -27,24 +30,20 @@ pub async fn create_topic(
     .fetch_one(&pool)
     .await?;
 
-    let mut data = Map::new();
-    data.insert("topic".to_string(), json!(&topic));
-
-    let res = AppResponse {
-        code: StatusCode::CREATED.into(),
-        data: json!(data),
-        msg: "Topic create succeed.".to_string(),
-    };
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("topic".to_string(), json!(&topic));
+    res.insert("msg".to_string(), json!("Topic create succeed."));
 
     println!("\n{:?}\n", res);
 
-    Ok(Json(res))
+    Ok(Json(json!(res)))
 }
 
 pub async fn get_topic(
     State(pool): State<Pool<Postgres>>,
     Path(topic_id): Path<Uuid>,
-) -> Result<Json<AppResponse<Value>>, AppError> {
+) -> Result<Json<Value>, AppError> {
     let topic: Topic = sqlx::query_as(
         r#"
             select _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
@@ -62,24 +61,18 @@ pub async fn get_topic(
     .fetch_one(&pool)
     .await?;
 
-    let mut data = Map::new();
-    data.insert("topic".to_string(), json!(&topic));
-
-    let res = AppResponse {
-        code: StatusCode::OK.into(),
-        data: json!(data),
-        msg: "User query succeed.".to_string(),
-    };
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("topic".to_string(), json!(&topic));
+    res.insert("msg".to_string(), json!("Topic query succeed."));
 
     println!("\n{:?}\n", res);
 
-    Ok(Json(res))
+    Ok(Json(json!(res)))
 }
 
-pub async fn get_topics(
-    State(pool): State<Pool<Postgres>>,
-) -> Result<Json<AppResponse<Value>>, AppError> {
-    let topics: Vec<Topic> = sqlx::query_as(
+pub async fn get_topics(State(pool): State<Pool<Postgres>>) -> Result<Json<Value>, AppError> {
+    let mut topics: Vec<Topic> = sqlx::query_as(
         r#"
             select _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
                 select row_to_json(u) from (
@@ -103,17 +96,15 @@ pub async fn get_topics(
     .fetch_one(&pool)
     .await?;
 
-    let mut data = Map::new();
-    data.insert("topics".to_string(), json!(&topics));
-    data.insert("total".to_string(), json!(&total));
+    let topics = topic_fmt::format(&mut topics)?;
 
-    let res = AppResponse {
-        code: StatusCode::OK.into(),
-        data: json!(data),
-        msg: "Topics query succeed.".to_string(),
-    };
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_str()));
+    res.insert("topics".to_string(), json!(&topics));
+    res.insert("total".to_string(), json!(&total));
+    res.insert("msg".to_string(), json!("Topics query succeed."));
 
     println!("\n{:?}\n", res);
 
-    Ok(Json(res))
+    Ok(Json(json!(res)))
 }

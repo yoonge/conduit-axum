@@ -2,20 +2,12 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde::Serialize;
 
 pub mod topic;
 pub mod user;
 pub mod utils;
 
 use self::utils::jwt::AuthError;
-
-#[derive(Debug, Serialize)]
-pub struct AppResponse<T: Serialize> {
-    code: u16,
-    data: T,
-    msg: String,
-}
 
 pub enum AppError {
     Auth(AuthError),
@@ -29,7 +21,8 @@ impl IntoResponse for AppError {
             Self::Internal(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Something went wrong: {}.", err),
-            ).into_response(),
+            )
+                .into_response(),
         }
     }
 }

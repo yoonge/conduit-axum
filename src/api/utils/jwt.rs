@@ -83,21 +83,6 @@ where
     }
 }
 
-// #[derive(Debug, Serialize)]
-// pub struct AuthBody {
-//     token: String,
-//     token_type: String,
-// }
-
-// impl AuthBody {
-//     pub fn new(token: String) -> Self {
-//         Self {
-//             token,
-//             token_type: "Bearer".to_string(),
-//         }
-//     }
-// }
-
 #[derive(Debug, Serialize)]
 pub enum AuthError {
     InvalidCredentials,
@@ -114,7 +99,7 @@ impl IntoResponse for AuthError {
             Self::MissingCredentials => (StatusCode::UNAUTHORIZED, "Missing credentials."),
             Self::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error."),
         };
-        let body = Json(json!({ "err": msg }));
+        let body = Json(json!({ "code": code.as_str(), "msg": msg }));
         (code, body).into_response()
     }
 }
