@@ -1,7 +1,7 @@
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool, Pool, Postgres, types::JsonValue};
 use std::env;
-use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::api::utils::date_fmt;
@@ -27,7 +27,7 @@ pub struct User {
     pub bio: String,
     pub birthday: String,
     #[serde(with = "date_fmt")]
-    pub create_at: OffsetDateTime,
+    pub create_at: DateTime<Local>,
     pub email: String,
     pub favorite: Vec<Uuid>,
     // 1: male, 0: female, -1: secret
@@ -39,7 +39,7 @@ pub struct User {
     pub phone: String,
     pub position: String,
     #[serde(with = "date_fmt")]
-    pub update_at: OffsetDateTime,
+    pub update_at: DateTime<Local>,
     pub username: String,
 }
 
@@ -57,7 +57,7 @@ pub struct Topic {
     #[sqlx(default)]
     pub content_clip: Option<String>,
     #[serde(with = "date_fmt")]
-    pub create_at: OffsetDateTime,
+    pub create_at: DateTime<Local>,
     pub favorite: i32,
     pub _id: Uuid,
     pub tags: Vec<String>,
@@ -65,7 +65,7 @@ pub struct Topic {
     #[sqlx(default)]
     pub title_clip: Option<String>,
     #[serde(with = "date_fmt")]
-    pub update_at: OffsetDateTime,
+    pub update_at: DateTime<Local>,
     #[sqlx(default)]
     pub update_at_str: Option<String>,
     pub user_id: Uuid,

@@ -1,6 +1,6 @@
 [package]
 name = "conduit_axum"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Svelte <dev.yoonge@gmail.com>"]
 edition = "2021"
 publish = false
@@ -12,16 +12,16 @@ anyhow = "1.0.82"
 argon2 = "0.5.3"
 axum = "0.7.5"
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
+chrono = { version = "0.4.38", features = ["serde"] }
 dotenvy = "0.15.7"
 jsonwebtoken = "9.3.0"
 once_cell = "1.19.0"
 rand = "0.8.5"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = { version = "1.0.115", features = ["raw_value"] }
-sqlx = { version = "0.7.4", features = ["postgres", "runtime-async-std", "tls-native-tls", "time", "uuid"] }
-time = { version = "0.3.36", features = ["macros", "serde-human-readable"] }
+sqlx = { version = "0.7.4", features = ["chrono", "postgres", "runtime-async-std", "tls-native-tls", "uuid"] }
 tokio = { version = "1.37.0", features = ["full"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "time", "local-time"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "time", "local-time", "chrono"] }
 uuid = { version = "1.8.0", features = ["serde"] }

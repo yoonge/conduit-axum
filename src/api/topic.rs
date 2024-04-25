@@ -98,7 +98,7 @@ pub async fn get_topics(
             limit $1 offset $2
         "#
     )
-    .bind(&page)
+    .bind(PAGE_SIZE)
     .bind(&offset)
     .fetch_all(&pool)
     .await?;
@@ -157,7 +157,7 @@ pub async fn get_user_profile(
         "#
     )
     .bind(&username)
-    .bind(&page)
+    .bind(PAGE_SIZE)
     .bind(&offset)
     .fetch_all(&pool)
     .await?;
@@ -221,7 +221,7 @@ pub async fn get_user_favorites(
         "#
     )
     .bind(&username)
-    .bind(&page)
+    .bind(PAGE_SIZE)
     .bind(&offset)
     .fetch_all(&pool)
     .await?;

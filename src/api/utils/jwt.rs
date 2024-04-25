@@ -99,7 +99,7 @@ impl IntoResponse for AuthError {
             Self::MissingCredentials => (StatusCode::UNAUTHORIZED, "Missing credentials."),
             Self::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error."),
         };
-        let body = Json(json!({ "code": code.as_str(), "msg": msg }));
+        let body = Json(json!({ "code": code.as_u16(), "msg": msg }));
         (code, body).into_response()
     }
 }
