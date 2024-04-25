@@ -46,6 +46,26 @@ GET {{host}}/settings HTTP/1.1
 Authorization: Bearer {{user_login.response.body.$.token}}
 
 
+### My Topics
+GET {{host}}/my-topics HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
+
+
+### My Favorites
+GET {{host}}/my-favorites HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
+
+
+### Favor or Disfavor a Topic
+POST {{host}}/favor HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
+content-type: {{json}}
+
+{
+    "topic_id": "59ff3777-ad5d-4539-951b-16935122cb3a"
+}
+
+
 ### Topic Initiate
 # @name topic_initiate
 POST {{host}}/topic/initiate HTTP/1.1
@@ -63,11 +83,11 @@ content-type: {{json}}
 GET {{host}}/topic/59ff3777-ad5d-4539-951b-16935122cb3a HTTP/1.1
 
 
-### User Profile, Own Topics
+### Profile, (User)Someone's Topics
 GET {{host}}/profile/q HTTP/1.1
 Authorization: Bearer {{user_login.response.body.$.token}}
 
 
-### User Profile, Favorites
+### Profile, (User)Someone's Favorites
 GET {{host}}/profile/q/favorites HTTP/1.1
 Authorization: Bearer {{user_login.response.body.$.token}}
