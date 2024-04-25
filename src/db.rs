@@ -1,13 +1,12 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool, Pool, Postgres, types::JsonValue};
-use std::env;
 use uuid::Uuid;
 
 use crate::api::utils::date_fmt;
 
 pub async fn establish_connection() -> Pool<Postgres> {
-    let db_url = env::var("DATABASE_URL").expect("`DATABASE_URL` must be set.");
+    let db_url = std::env::var("DATABASE_URL").expect("`DATABASE_URL` must be set.");
     let pool = PgPool::connect(&db_url)
         .await
         .expect("Failed to connect to database.");

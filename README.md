@@ -32,9 +32,7 @@ $ cargo run
 <!-- ## ⚡ Features -->
 
 
-<!-- ## 📌 TODO
-
-- use `chrono` instead of `time`. -->
+<!-- ## 📌 TODO -->
 
 
 ## 📄 License

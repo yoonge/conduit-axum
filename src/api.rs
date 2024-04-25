@@ -3,6 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+pub mod common;
 pub mod topic;
 pub mod user;
 pub mod utils;

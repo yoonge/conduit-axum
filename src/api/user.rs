@@ -6,18 +6,20 @@ use axum::{
     Json,
 };
 use jsonwebtoken::{encode, Header};
+use serde::Deserialize;
 use serde_json::{json, Map, Value};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use super::{
+    common,
     utils::{
         jwt::{AuthError, AuthPayload, Claims, KEYS},
         password,
     },
     AppError, PAGE_SIZE,
 };
-use crate::db::{NewUser, User};
+use crate::{api::utils::topic_fmt, db::{NewUser, Topic, User}};
 
 pub async fn login(
     State(_pool): State<Pool<Postgres>>,
@@ -91,20 +93,6 @@ pub async fn register(
     Ok(Json(json!(res)))
 }
 
-pub async fn query_user(pool: Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
-    let user: User = sqlx::query_as(
-        r#"
-            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
-            from users
-            where _id = $1
-        "#
-    ).bind(&user_id)
-    .fetch_one(&pool)
-    .await?;
-
-    Ok(user)
-}
-
 pub async fn get_user(
     _claims: Claims,
     State(pool): State<Pool<Postgres>>,
@@ -161,7 +149,7 @@ pub async fn get_users(
     let total: i64 = sqlx::query_scalar(
         r#"
             select count(*) from users
-        "#
+        "#,
     )
     .fetch_one(&pool)
     .await?;
@@ -184,12 +172,149 @@ pub async fn get_user_settings(
 ) -> Result<Json<Value>, AppError> {
     println!("\n{:?}\n", claims);
 
-    let user = query_user(pool, claims.cuid).await?;
+    let user = common::query_user(&pool, claims.cuid).await?;
 
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("User settings query succeed."));
     res.insert("user".to_string(), json!(&user));
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(json!(res)))
+}
+
+pub async fn get_my_topics(
+    claims: Claims,
+    State(pool): State<Pool<Postgres>>,
+    Query(args): Query<HashMap<String, String>>,
+) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+    println!("\nQuery Args: {:?}\n", args);
+    let page = args
+        .get("page")
+        .unwrap_or(&"1".to_string())
+        .parse::<i32>()?;
+
+    let (topics, total) = common::get_user_topics(&pool, page, claims.username).await?;
+
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("User topics query succeed."));
+    res.insert("page".to_string(), json!(&page));
+    res.insert("topics".to_string(), json!(&topics));
+    res.insert("total".to_string(), json!(&total));
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(json!(res)))
+}
+
+pub async fn get_my_favorites(
+    claims: Claims,
+    State(pool): State<Pool<Postgres>>,
+    Query(args): Query<HashMap<String, String>>,
+) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+    println!("\nQuery Args: {:?}\n", args);
+    let page = args
+        .get("page")
+        .unwrap_or(&"1".to_string())
+        .parse::<i32>()?;
+
+    let (topics, total) = common::get_user_favorites(&pool, page, claims.username).await?;
+
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("User topics query succeed."));
+    res.insert("page".to_string(), json!(&page));
+    res.insert("topics".to_string(), json!(&topics));
+    res.insert("total".to_string(), json!(&total));
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(json!(res)))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FavorPayload {
+    topic_id: Uuid,
+    // user_id: Option<Uuid>,
+}
+
+pub async fn favor(
+    claims: Claims,
+    State(pool): State<Pool<Postgres>>,
+    Json(payload): Json<FavorPayload>,
+) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+
+    let topic: Topic = sqlx::query_as(
+        r#"
+            with u as (
+                select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                from users
+                where _id = $1
+            )
+            update topics t
+            set favorite =
+                case
+                    when $2 = any((select favorite from u)::uuid[]) then
+                        favorite - 1
+                    else
+                        favorite + 1
+                end
+            where _id = $2
+            returning _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
+                select row_to_json(u1) from (
+                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                    from users
+                    where _id = t.user_id
+                ) u1
+            ) as user
+        "#
+    )
+    .bind(&claims.cuid)
+    .bind(&payload.topic_id)
+    .fetch_one(&pool)
+    .await?;
+
+    let topics = topic_fmt::format(vec![topic])?;
+
+    let user: User = sqlx::query_as(
+        r#"
+            with u as (
+                select favorite
+                from users
+                where _id = $1
+            )
+            update users
+            set favorite =
+                case
+                    when $2 = any((select favorite from u)::uuid[]) then
+                        array_remove((select favorite from u)::uuid[], $2)
+                    else
+                        array_append((select favorite from u)::uuid[], $2)
+                end
+            where _id = $1
+            returning _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
+        "#
+    )
+    .bind(&claims.cuid)
+    .bind(&payload.topic_id)
+    .fetch_one(&pool)
+    .await?;
+
+    let mut topic = topics[0].clone();
+    if topic.user_id == claims.cuid {
+        topic.user = Some(json!(&user));
+    }
+
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("User favor / disfavor succeed."));
+    res.insert("updatedTopic".to_string(), json!(&topic));
+    res.insert("updatedUser".to_string(), json!(&user));
 
     println!("\n{:?}\n", res);
 

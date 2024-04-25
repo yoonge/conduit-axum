@@ -16,7 +16,6 @@ use self::api::{topic, user};
 async fn main() {
     dotenvy::dotenv().ok();
 
-    // initialize tracing
     tracing_subscriber::fmt()
         .with_timer(ChronoLocal::new("%Y-%m-%d %H:%M:%S".to_string()))
         .with_target(false)
@@ -37,6 +36,9 @@ async fn main() {
         .route("/api/user/:username", get(user::get_user))
         .route("/api/user/list", get(user::get_users))
         .route("/api/settings", get(user::get_user_settings))
+        .route("/api/my-topics", get(user::get_my_topics))
+        .route("/api/my-favorites", get(user::get_my_favorites))
+        .route("/api/favor", post(user::favor))
         .route("/api/topic/initiate", post(topic::create_topic))
         .route("/api/topic/:topic_id", get(topic::get_topic))
         .route("/api/profile/:username", get(topic::get_user_profile))
@@ -52,10 +54,3 @@ async fn main() {
     let listener = TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
-
-// fn internal_error<E>(err: E) -> (StatusCode, String)
-// where
-//     E: std::error::Error,
-// {
-//     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-// }
