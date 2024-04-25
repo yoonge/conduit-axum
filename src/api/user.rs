@@ -153,15 +153,24 @@ pub async fn get_users(
             limit $1 offset $2
         "#
     )
-    .bind(&page)
+    .bind(PAGE_SIZE)
     .bind(&offset)
     .fetch_all(&pool)
+    .await?;
+
+    let total: i64 = sqlx::query_scalar(
+        r#"
+            select count(*) from users
+        "#
+    )
+    .fetch_one(&pool)
     .await?;
 
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("Users query succeed."));
     res.insert("page".to_string(), json!(&page));
+    res.insert("total".to_string(), json!(&total));
     res.insert("users".to_string(), json!(&users));
 
     println!("\n{:?}\n", res);

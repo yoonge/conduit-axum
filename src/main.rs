@@ -2,11 +2,10 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use time::{macros::format_description, UtcOffset};
 use tokio::net::TcpListener;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tracing::{info, Level};
-use tracing_subscriber::fmt::time::OffsetTime;
+use tracing_subscriber::fmt::time::ChronoLocal;
 
 mod api;
 mod db;
@@ -17,14 +16,9 @@ use self::api::{topic, user};
 async fn main() {
     dotenvy::dotenv().ok();
 
-    let timer = OffsetTime::new(
-        UtcOffset::from_hms(8, 0, 0).unwrap(),
-        format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond digits:3]"),
-    );
-
     // initialize tracing
     tracing_subscriber::fmt()
-        .with_timer(timer)
+        .with_timer(ChronoLocal::new("%Y-%m-%d %H:%M:%S".to_string()))
         .with_target(false)
         .compact()
         .init();
@@ -46,7 +40,10 @@ async fn main() {
         .route("/api/topic/initiate", post(topic::create_topic))
         .route("/api/topic/:topic_id", get(topic::get_topic))
         .route("/api/profile/:username", get(topic::get_user_profile))
-        .route("/api/profile/:username/favorites", get(topic::get_user_favorites))
+        .route(
+            "/api/profile/:username/favorites",
+            get(topic::get_user_favorites),
+        )
         .with_state(pool)
         .layer(trace_layer);
 

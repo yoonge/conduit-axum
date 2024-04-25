@@ -1,4 +1,4 @@
-use time::macros::{format_description, offset};
+// use time::macros::{format_description, offset};
 
 use crate::db::Topic;
 
@@ -19,15 +19,7 @@ pub fn format(topics: Vec<Topic>) -> Result<Vec<Topic>, anyhow::Error> {
         let format_topic = Topic {
             content_clip: Some(content_clip),
             title_clip: Some(title_clip),
-            update_at_str: Some(
-                topic
-                    .update_at
-                    .to_offset(offset!(+8))
-                    .format(format_description!(
-                        "[year]-[month]-[day] [hour]:[minute]:[second]"
-                    ))
-                    .unwrap(),
-            ),
+            update_at_str: Some(format!("{}", topic.update_at.format("%Y-%m-%d %H:%M:%S"))),
             ..topic
         };
 
