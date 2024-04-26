@@ -1,6 +1,7 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool, Pool, Postgres, types::JsonValue};
+use serde_json::Value;
+use sqlx::{FromRow, PgPool, Pool, Postgres};
 use uuid::Uuid;
 
 use crate::api::utils::date_fmt;
@@ -22,6 +23,7 @@ pub struct NewUser {
 
 #[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
 pub struct User {
+    pub _id: Uuid,
     pub avatar: String,
     pub bio: String,
     pub birthday: String,
@@ -31,12 +33,11 @@ pub struct User {
     pub favorite: Vec<Uuid>,
     // 1: male, 0: female, -1: secret
     pub gender: i16,
-    pub _id: Uuid,
+    pub job: String,
     pub nickname: String,
     #[sqlx(default)]
     pub password: Option<String>,
     pub phone: String,
-    pub position: String,
     #[serde(with = "date_fmt")]
     pub update_at: DateTime<Local>,
     pub username: String,
@@ -51,6 +52,7 @@ pub struct NewTopic {
 
 #[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
 pub struct Topic {
+    pub _id: Uuid,
     pub comments: Vec<Uuid>,
     pub content: String,
     #[sqlx(default)]
@@ -58,7 +60,6 @@ pub struct Topic {
     #[serde(with = "date_fmt")]
     pub create_at: DateTime<Local>,
     pub favorite: i32,
-    pub _id: Uuid,
     pub tags: Vec<String>,
     pub title: String,
     #[sqlx(default)]
@@ -69,5 +70,5 @@ pub struct Topic {
     pub update_at_str: Option<String>,
     pub user_id: Uuid,
     #[sqlx(default)]
-    pub user: Option<JsonValue>
+    pub user: Option<Value>
 }

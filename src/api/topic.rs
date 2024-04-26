@@ -24,7 +24,7 @@ pub async fn create_topic(
         r#"
             insert into topics (content, title, user_id)
             values ($1, $2, $3)
-            returning _id, comments, content, create_at, favorite, tags, title, update_at, user_id
+            returning *
         "#,
     )
     .bind(&new_topic.content)
@@ -51,7 +51,7 @@ pub async fn get_topic(
         r#"
             select _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
                 select row_to_json(u) from (
-                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
                     from users
                     where _id = t.user_id
                 ) u
@@ -89,7 +89,7 @@ pub async fn get_topics(
         r#"
             select _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
                 select row_to_json(u) from (
-                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
                     from users
                     where _id = t.user_id
                 ) u
@@ -172,7 +172,7 @@ pub async fn get_user_favorites(
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert(
         "msg".to_string(),
-        json!("User's favorites topics query succeed."),
+        json!("User's favorite topics query succeed."),
     );
     res.insert("page".to_string(), json!(&page));
     res.insert("topics".to_string(), json!(&topics));

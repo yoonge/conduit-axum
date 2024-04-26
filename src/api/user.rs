@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::anyhow;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -19,7 +20,10 @@ use super::{
     },
     AppError, PAGE_SIZE,
 };
-use crate::{api::utils::topic_fmt, db::{NewUser, Topic, User}};
+use crate::{
+    api::utils::topic_fmt,
+    db::{NewUser, Topic, User},
+};
 
 pub async fn login(
     State(_pool): State<Pool<Postgres>>,
@@ -32,7 +36,7 @@ pub async fn login(
     let hashed_password = password::hash(payload.password).await?;
     let user: User = sqlx::query_as(
         r#"
-            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
+            select _id, avatar, bio, birthday, create_at, email, favorite, gender, job, nickname, phone, update_at, username
             from users
             where email = $1 and password = $2
         "#
@@ -63,12 +67,30 @@ pub async fn register(
     State(pool): State<Pool<Postgres>>,
     Json(new_user): Json<NewUser>,
 ) -> Result<Json<Value>, AppError> {
+    let count: i64 = sqlx::query_scalar(
+        r#"
+            select count(*)
+            from users
+            where email = $1 or username = $2
+        "#,
+    )
+    .bind(&new_user.email)
+    .bind(&new_user.username)
+    .fetch_one(&pool)
+    .await?;
+
+    if count > 0 {
+        return Err(AppError::Duplicate(anyhow!(
+            "Email or username already exsists."
+        )));
+    }
+
     let hashed_password = password::hash(new_user.password).await?;
     let user: User = sqlx::query_as(
         r#"
             insert into users (email, password, username)
             values ($1, $2, $3)
-            returning _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, password, phone, position, update_at, username
+            returning *
         "#,
     )
     .bind(&new_user.email)
@@ -102,7 +124,7 @@ pub async fn get_user(
 
     let user: User = sqlx::query_as(
         r#"
-            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
+            select _id, avatar, bio, birthday, create_at, email, favorite, gender, job, nickname, phone, update_at, username
             from users
             where username = $1
         "#
@@ -135,7 +157,7 @@ pub async fn get_users(
 
     let users: Vec<User> = sqlx::query_as(
         r#"
-            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
+            select _id, avatar, bio, birthday, create_at, email, favorite, gender, job, nickname, phone, update_at, username
             from users
             order by create_at desc
             limit $1 offset $2
@@ -166,7 +188,7 @@ pub async fn get_users(
     Ok(Json(json!(res)))
 }
 
-pub async fn get_user_settings(
+pub async fn get_my_settings(
     claims: Claims,
     State(pool): State<Pool<Postgres>>,
 ) -> Result<Json<Value>, AppError> {
@@ -178,6 +200,55 @@ pub async fn get_user_settings(
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("User settings query succeed."));
     res.insert("user".to_string(), json!(&user));
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(json!(res)))
+}
+
+pub async fn update_my_settings(
+    claims: Claims,
+    State(pool): State<Pool<Postgres>>,
+    Json(payload): Json<UserPayload>,
+) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+
+    let user: User = sqlx::query_as(
+        r#"
+            update users
+            set
+                avatar = case when $1 is not null then $1 else avatar end,
+                bio = case when $2 is not null then $2 else bio end,
+                birthday = case when $3 is not null then $3 else birthday end,
+                email = case when $4 is not null then $4 else email end,
+                gender = case when $5 is not null then $5 else gender end,
+                nickname = case when $6 is not null then $6 else nickname end,
+                job = case when $7 is not null then $7 else job end,
+                password = case when $8 != '' and $8 is not null then $1 else password end,
+                phone = case when $9 is not null then $9 else phone end,
+                username = case when $10 is not null then $10 else username end
+            where _id = $11
+            returning *
+        "#,
+    )
+    .bind(&payload.avatar)
+    .bind(&payload.bio)
+    .bind(&payload.birthday)
+    .bind(&payload.email)
+    .bind(&payload.gender)
+    .bind(&payload.nickname)
+    .bind(&payload.job)
+    .bind(&payload.password)
+    .bind(&payload.phone)
+    .bind(&payload.username)
+    .bind(&payload._id)
+    .fetch_one(&pool)
+    .await?;
+
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("User settings update succeed."));
+    res.insert("updatedUser".to_string(), json!(&user));
 
     println!("\n{:?}\n", res);
 
@@ -200,7 +271,7 @@ pub async fn get_my_topics(
 
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
-    res.insert("msg".to_string(), json!("User topics query succeed."));
+    res.insert("msg".to_string(), json!("User's own topics query succeed."));
     res.insert("page".to_string(), json!(&page));
     res.insert("topics".to_string(), json!(&topics));
     res.insert("total".to_string(), json!(&total));
@@ -226,7 +297,7 @@ pub async fn get_my_favorites(
 
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
-    res.insert("msg".to_string(), json!("User topics query succeed."));
+    res.insert("msg".to_string(), json!("User's favorite topics query succeed."));
     res.insert("page".to_string(), json!(&page));
     res.insert("topics".to_string(), json!(&topics));
     res.insert("total".to_string(), json!(&total));
@@ -234,12 +305,6 @@ pub async fn get_my_favorites(
     println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
-}
-
-#[derive(Debug, Deserialize)]
-pub struct FavorPayload {
-    topic_id: Uuid,
-    // user_id: Option<Uuid>,
 }
 
 pub async fn favor(
@@ -252,7 +317,7 @@ pub async fn favor(
     let topic: Topic = sqlx::query_as(
         r#"
             with u as (
-                select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
                 from users
                 where _id = $1
             )
@@ -267,7 +332,7 @@ pub async fn favor(
             where _id = $2
             returning _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
                 select row_to_json(u1) from (
-                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
                     from users
                     where _id = t.user_id
                 ) u1
@@ -297,7 +362,7 @@ pub async fn favor(
                         array_append((select favorite from u)::uuid[], $2)
                 end
             where _id = $1
-            returning _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
+            returning _id, avatar, bio, birthday, create_at, email, favorite, gender, job, nickname, phone, update_at, username
         "#
     )
     .bind(&claims.cuid)
@@ -319,4 +384,25 @@ pub async fn favor(
     println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
+}
+
+#[derive(Deserialize)]
+pub struct FavorPayload {
+    topic_id: Uuid,
+    // user_id: Option<Uuid>,
+}
+
+#[derive(Deserialize)]
+pub struct UserPayload {
+    _id: Uuid,
+    avatar: String,
+    bio: String,
+    birthday: String,
+    email: String,
+    gender: i16,
+    job: String,
+    nickname: String,
+    password: String,
+    phone: String,
+    username: String,
 }

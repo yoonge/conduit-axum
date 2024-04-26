@@ -1,5 +1,3 @@
-// use time::macros::{format_description, offset};
-
 use crate::db::Topic;
 
 pub fn format(topics: Vec<Topic>) -> Result<Vec<Topic>, anyhow::Error> {
