@@ -9,10 +9,10 @@ create table if not exists users (
     favorite uuid[] NOT NULL DEFAULT ARRAY[]::uuid[],
     -- 1: male, 0: female, -1: secret
     gender SMALLINT NOT NULL DEFAULT -1,
+    job TEXT NOT NULL DEFAULT '',
     nickname TEXT NOT NULL DEFAULT '',
     password TEXT NOT NULL,
     phone TEXT NOT NULL DEFAULT '',
-    position TEXT NOT NULL DEFAULT '',
     update_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     username TEXT NOT NULL
 );

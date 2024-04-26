@@ -7,7 +7,7 @@ use crate::db::{Topic, User};
 pub async fn query_user(pool: &Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
     let user: User = sqlx::query_as(
         r#"
-            select _id, avatar, bio, birthday, create_at, email, favorite, gender, nickname, phone, position, update_at, username
+            select _id, avatar, bio, birthday, create_at, email, favorite, gender, job, nickname, phone, update_at, username
             from users
             where _id = $1
         "#
@@ -29,7 +29,7 @@ pub async fn get_user_topics(
         r#"
             with u as
             (
-                select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
                 from users
                 where username = $1
             )
@@ -77,7 +77,7 @@ pub async fn get_user_favorites(
         r#"
             with u as
             (
-                select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, nickname, phone, position, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
                 from users
                 where username = $1
             )
@@ -96,16 +96,18 @@ pub async fn get_user_favorites(
     .fetch_all(pool)
     .await?;
 
-    let total: i32 = sqlx::query_scalar(
+    let favorite: (Vec<Uuid>,) = sqlx::query_as(
         r#"
-            select array_length(favorite, 1) from users where username = $1
+            select favorite from users where username = $1
         "#,
     )
     .bind(&username)
-    .fetch_one(pool)
-    .await?;
+    .fetch_optional(pool)
+    .await?
+    .unwrap_or((vec![],));
 
     let topics = topic_fmt::format(topics)?;
+    let total = favorite.0.len() as i64;
 
-    Ok((topics, total as i64))
+    Ok((topics, total))
 }
