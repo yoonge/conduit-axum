@@ -22,7 +22,14 @@ pub async fn query_user(pool: &Pool<Postgres>, user_id: Uuid) -> Result<User, Ap
 pub async fn query_topic(pool: &Pool<Postgres>, topic_id: Uuid) -> Result<Topic, AppError> {
     let topic: Topic = sqlx::query_as(
         r#"
-            select _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
+            select _id, comments, (
+                select json_agg(cs) from (
+                    select _id, content, create_at, topic, user_id
+                    from comments
+                    where topic = $1
+                    order by create_at desc
+                ) as cs
+            ) as comments_arr, content, create_at, favorite, tags, title, update_at, user_id, (
                 select row_to_json(u) from (
                     select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
                     from users

@@ -14,7 +14,7 @@ use super::{
     utils::{jwt::Claims, topic_fmt},
     AppError, PAGE_SIZE,
 };
-use crate::db::{NewTopic, Topic, TopicPayload};
+use crate::db::{Comment, NewComment, NewTopic, Topic, TopicPayload};
 
 pub async fn create_topic(
     claims: Claims,
@@ -24,7 +24,10 @@ pub async fn create_topic(
     println!("\n{:?}\n", claims);
 
     let mut tags = payload.tags.clone();
-    tags = tags.iter().map(|tag| tag.to_lowercase()).collect::<Vec<String>>();
+    tags = tags
+        .iter()
+        .map(|tag| tag.to_lowercase())
+        .collect::<Vec<String>>();
     tags.sort();
     println!("\nSorted tags: {:?}\n", tags);
 
@@ -62,6 +65,8 @@ pub async fn get_topic(
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("Topic query succeed."));
     res.insert("topic".to_string(), json!(&topic));
+    res["topic"]["comments"] = res["topic"]["comments_arr"].clone();
+    res["topic"]["comments_arr"] = json!(null);
 
     println!("\n{:?}\n", res);
 
@@ -83,13 +88,15 @@ pub async fn get_update_topic(
     res.insert("msg".to_string(), json!("Topic delete succeed."));
     res.insert("topic".to_string(), json!(&topic));
     res.insert("user".to_string(), json!(&user));
+    res["topic"]["comments"] = res["topic"]["comments_arr"].clone();
+    res["topic"]["comments_arr"] = json!(null);
 
     println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
 }
 
-pub async fn update_topic(
+pub async fn topic_update(
     claims: Claims,
     State(pool): State<Pool<Postgres>>,
     Json(payload): Json<TopicPayload>,
@@ -97,7 +104,10 @@ pub async fn update_topic(
     println!("\n{:?}\n", claims);
 
     let mut tags = payload.tags.clone();
-    tags = tags.iter().map(|tag| tag.to_lowercase()).collect::<Vec<String>>();
+    tags = tags
+        .iter()
+        .map(|tag| tag.to_lowercase())
+        .collect::<Vec<String>>();
     tags.sort();
     println!("\nSorted tags: {:?}\n", tags);
 
@@ -111,7 +121,14 @@ pub async fn update_topic(
             update topics
             set content = $2, tags = $3, title = $4
             where _id = $5
-            returning _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
+            returning _id, comments, (
+                select json_agg(cs) from (
+                    select _id, content, create_at, topic, user_id
+                    from comments
+                    where topic = $5
+                    order by create_at desc
+                ) as cs
+            ) as comments_arr, content, create_at, favorite, tags, title, update_at, user_id, (
                 select row_to_json(u) from u
             ) as user
         "#,
@@ -128,6 +145,65 @@ pub async fn update_topic(
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("Topic update succeed."));
     res.insert("topic".to_string(), json!(&topic));
+    res["topic"]["comments"] = res["topic"]["comments_arr"].clone();
+    res["topic"]["comments_arr"] = json!(null);
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(json!(res)))
+}
+
+pub async fn topic_comment(
+    claims: Claims,
+    State(pool): State<Pool<Postgres>>,
+    Json(payload): Json<NewComment>,
+) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+
+    let topic: Topic = sqlx::query_as(
+        r#"
+            with
+                u as (
+                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                    from users
+                    where _id = $3
+                ),
+                c as (
+                    insert into comments (content, topic, user_id)
+                    values ($1, $2, $3)
+                    returning _id, content, create_at, topic, user_id
+                )
+            update topics t
+            set comments = array_append(t.comments, c._id)
+            from c
+            where t._id = $2
+            returning t._id, t.comments, t.content, t.create_at, t.favorite, t.tags, t.title, t.update_at, t.user_id, (
+                select row_to_json(u) from u
+            ) as user
+        "#
+    )
+    .bind(&payload.content)
+    .bind(&payload.topic)
+    .bind(&payload.user_id)
+    .fetch_one(&pool)
+    .await?;
+
+    let comments: Vec<Comment> = sqlx::query_as(
+        r#"
+            select _id, content, create_at, topic, user_id
+            from comments
+            where topic = $1
+            order by create_at desc
+        "#
+    ).bind(&payload.topic)
+    .fetch_all(&pool)
+    .await?;
+
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("Topic comment succeed."));
+    res.insert("updatedTopic".to_string(), json!(&topic));
+    res["updatedTopic"]["comments"] = json!(&comments);
 
     println!("\n{:?}\n", res);
 

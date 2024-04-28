@@ -70,6 +70,8 @@ pub struct NewTopic {
 pub struct Topic {
     pub _id: Uuid,
     pub comments: Vec<Uuid>,
+    #[sqlx(default)]
+    pub comments_arr: Option<Value>,
     pub content: String,
     #[sqlx(default)]
     pub content_clip: Option<String>,
@@ -103,4 +105,21 @@ pub struct TopicPayload {
 pub struct FavorPayload {
     pub topic_id: Uuid,
     // user_id: Option<Uuid>,
+}
+
+#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
+pub struct Comment {
+    pub _id: Uuid,
+    pub content: String,
+    #[serde(with = "date_fmt")]
+    pub create_at: DateTime<Local>,
+    pub topic: Uuid,
+    pub user_id: Uuid,
+}
+
+#[derive(Deserialize)]
+pub struct NewComment {
+    pub content: String,
+    pub topic: Uuid,
+    pub user_id: Uuid,
 }
