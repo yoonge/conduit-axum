@@ -43,7 +43,8 @@ async fn main() {
         .route("/api/topic/initiate", post(topic::create_topic))
         .route("/api/topic/:topic_id", get(topic::get_topic))
         .route("/api/topic/update/:topic_id", get(topic::get_update_topic))
-        .route("/api/topic/update", post(topic::update_topic))
+        .route("/api/topic/update", post(topic::topic_update))
+        .route("/api/topic/comment", post(topic::topic_comment))
         .route("/api/profile/:username", get(topic::get_user_profile))
         .route(
             "/api/profile/:username/favorites",
