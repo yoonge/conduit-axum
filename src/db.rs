@@ -44,8 +44,24 @@ pub struct User {
 }
 
 #[derive(Deserialize)]
+pub struct UserPayload {
+    pub _id: Uuid,
+    pub avatar: String,
+    pub bio: String,
+    pub birthday: String,
+    pub email: String,
+    pub gender: i16,
+    pub job: String,
+    pub nickname: String,
+    pub password: Option<String>,
+    pub phone: String,
+    pub username: String,
+}
+
+#[derive(Deserialize)]
 pub struct NewTopic {
     pub content: String,
+    pub tags: Vec<String>,
     pub title: String,
     pub user_id: Uuid,
 }
@@ -60,6 +76,7 @@ pub struct Topic {
     #[serde(with = "date_fmt")]
     pub create_at: DateTime<Local>,
     pub favorite: i32,
+    // #[serde(bound = "T: PartialEq + Eq + PartialOrd + Ord")]
     pub tags: Vec<String>,
     pub title: String,
     #[sqlx(default)]
@@ -71,4 +88,19 @@ pub struct Topic {
     pub user_id: Uuid,
     #[sqlx(default)]
     pub user: Option<Value>
+}
+
+#[derive(Deserialize)]
+pub struct TopicPayload {
+    pub _id: Uuid,
+    pub content: String,
+    pub tags: Vec<String>,
+    pub title: String,
+    pub user_id: Uuid,
+}
+
+#[derive(Deserialize)]
+pub struct FavorPayload {
+    pub topic_id: Uuid,
+    // user_id: Option<Uuid>,
 }

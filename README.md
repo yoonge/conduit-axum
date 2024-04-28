@@ -1,6 +1,6 @@
 # ⌨️ Conduit Axum
 
-![version](https://img.shields.io/badge/version-0.2.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![axum](https://img.shields.io/badge/axum-0.7.5-a21caf.svg) ![jsonwebtoken](https://img.shields.io/badge/jsonwebtoken-9.3.0-d63aff.svg) ![postgresql](https://img.shields.io/badge/postgresql-16.2-336792.svg) ![rust](https://img.shields.io/badge/rust-1.77.1-black.svg) ![sqlx](https://img.shields.io/badge/sqlx-0.7.4-orange.svg) ![cargo](https://img.shields.io/badge/cargo-1.77.1-black.svg)
+![version](https://img.shields.io/badge/version-0.2.0-green) [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) ![axum](https://img.shields.io/badge/axum-0.7.5-a21caf.svg) ![jsonwebtoken](https://img.shields.io/badge/jsonwebtoken-9.3.0-d63aff.svg) ![postgresql](https://img.shields.io/badge/postgresql-16.2-336792.svg) ![rust](https://img.shields.io/badge/rust-1.77.2-black.svg) ![sqlx](https://img.shields.io/badge/sqlx-0.7.4-orange.svg) ![cargo](https://img.shields.io/badge/cargo-1.77.2-black.svg)
 
 
 ## 💡 Introduction

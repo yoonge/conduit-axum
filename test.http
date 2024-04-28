@@ -60,7 +60,7 @@ content-type: {{json}}
     "gender": 1,
     "job": "Student",
     "nickname": "Q",
-    "password": "",
+    "password": null,
     "phone": "14624351173",
     "username": "q"
 }
@@ -94,6 +94,7 @@ content-type: {{json}}
 
 {
     "content": "🎉️ 🎉️ 🎉️ See how the exact same Medium.com clone (called Conduit) is built using different frontends and backends. Yes, you can mix and match them, because they all adhere to the same API spec ❤️ ❤️ ❤️",
+    "tags": [],
     "title": "Welcome to RealWorld project",
     "user_id": "4859a909-35e9-4286-8d51-89f4d1d7973c"
 }
@@ -101,6 +102,25 @@ content-type: {{json}}
 
 ### Topic Detail
 GET {{host}}/topic/edb5c8d7-be7f-4242-923f-b4e4505a57bc HTTP/1.1
+
+
+### Topic Update GET
+GET {{host}}/topic/update/edb5c8d7-be7f-4242-923f-b4e4505a57bc HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
+
+
+### Topic Update POST
+POST {{host}}/topic/update HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
+content-type: {{json}}
+
+{
+    "_id": "edb5c8d7-be7f-4242-923f-b4e4505a57bc",
+    "content": "🎉️ 🎉️ 🎉️ See how the exact same Medium.com clone (called Conduit) is built using different frontends and backends. Yes, you can mix and match them, because they all adhere to the same API spec 🎉️ 🎉️ 🎉️ ",
+    "tags": ["Realword", "API", "conduit"],
+    "title": "Welcome to RealWorld project",
+    "user_id": "4859a909-35e9-4286-8d51-89f4d1d7973c"
+}
 
 
 ### Profile, (User)Someone's Topics

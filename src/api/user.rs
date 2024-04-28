@@ -7,10 +7,8 @@ use axum::{
     Json,
 };
 use jsonwebtoken::{encode, Header};
-use serde::Deserialize;
 use serde_json::{json, Map, Value};
 use sqlx::{Pool, Postgres};
-use uuid::Uuid;
 
 use super::{
     common,
@@ -22,7 +20,7 @@ use super::{
 };
 use crate::{
     api::utils::topic_fmt,
-    db::{NewUser, Topic, User},
+    db::{FavorPayload, NewUser, Topic, User, UserPayload},
 };
 
 pub async fn login(
@@ -116,11 +114,11 @@ pub async fn register(
 }
 
 pub async fn get_user(
-    _claims: Claims,
+    claims: Claims,
     State(pool): State<Pool<Postgres>>,
     Path(username): Path<String>,
 ) -> Result<Json<Value>, AppError> {
-    println!("\n{:?}\n", _claims);
+    println!("\n{:?}\n", claims);
 
     let user: User = sqlx::query_as(
         r#"
@@ -143,11 +141,11 @@ pub async fn get_user(
 }
 
 pub async fn get_users(
-    _claims: Claims,
+    claims: Claims,
     State(pool): State<Pool<Postgres>>,
     Query(args): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AppError> {
-    println!("\n{:?}\n", _claims);
+    println!("\n{:?}\n", claims);
     println!("\nQuery Args: {:?}\n", args);
     let page = args
         .get("page")
@@ -238,7 +236,7 @@ pub async fn update_my_settings(
     .bind(&payload.gender)
     .bind(&payload.nickname)
     .bind(&payload.job)
-    .bind(&payload.password)
+    .bind(&payload.password.unwrap_or("".to_string()))
     .bind(&payload.phone)
     .bind(&payload.username)
     .bind(&payload._id)
@@ -384,25 +382,4 @@ pub async fn favor(
     println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
-}
-
-#[derive(Deserialize)]
-pub struct FavorPayload {
-    topic_id: Uuid,
-    // user_id: Option<Uuid>,
-}
-
-#[derive(Deserialize)]
-pub struct UserPayload {
-    _id: Uuid,
-    avatar: String,
-    bio: String,
-    birthday: String,
-    email: String,
-    gender: i16,
-    job: String,
-    nickname: String,
-    password: String,
-    phone: String,
-    username: String,
 }
