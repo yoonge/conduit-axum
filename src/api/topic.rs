@@ -14,22 +14,31 @@ use super::{
     utils::{jwt::Claims, topic_fmt},
     AppError, PAGE_SIZE,
 };
-use crate::db::{NewTopic, Topic};
+use crate::db::{NewTopic, Topic, TopicPayload};
 
 pub async fn create_topic(
+    claims: Claims,
     State(pool): State<Pool<Postgres>>,
-    Json(new_topic): Json<NewTopic>,
+    Json(payload): Json<NewTopic>,
 ) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+
+    let mut tags = payload.tags.clone();
+    tags = tags.iter().map(|tag| tag.to_lowercase()).collect::<Vec<String>>();
+    tags.sort();
+    println!("\nSorted tags: {:?}\n", tags);
+
     let topic: Topic = sqlx::query_as(
         r#"
-            insert into topics (content, title, user_id)
-            values ($1, $2, $3)
-            returning *
+            insert into topics (content, tags, title, user_id)
+            values ($1, $2, $3, $4)
+            returning _id, comments, content, create_at, favorite, tags, title, update_at, user_id
         "#,
     )
-    .bind(&new_topic.content)
-    .bind(&new_topic.title)
-    .bind(&new_topic.user_id)
+    .bind(&payload.content)
+    .bind(&tags)
+    .bind(&payload.title)
+    .bind(&payload.user_id)
     .fetch_one(&pool)
     .await?;
 
@@ -47,26 +56,77 @@ pub async fn get_topic(
     State(pool): State<Pool<Postgres>>,
     Path(topic_id): Path<Uuid>,
 ) -> Result<Json<Value>, AppError> {
+    let topic = common::query_topic(&pool, topic_id).await?;
+
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("Topic query succeed."));
+    res.insert("topic".to_string(), json!(&topic));
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(json!(res)))
+}
+
+pub async fn get_update_topic(
+    claims: Claims,
+    State(pool): State<Pool<Postgres>>,
+    Path(topic_id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+
+    let topic = common::query_topic(&pool, topic_id).await?;
+    let user = topic.user.clone().unwrap();
+
+    let mut res = Map::new();
+    res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
+    res.insert("msg".to_string(), json!("Topic delete succeed."));
+    res.insert("topic".to_string(), json!(&topic));
+    res.insert("user".to_string(), json!(&user));
+
+    println!("\n{:?}\n", res);
+
+    Ok(Json(json!(res)))
+}
+
+pub async fn update_topic(
+    claims: Claims,
+    State(pool): State<Pool<Postgres>>,
+    Json(payload): Json<TopicPayload>,
+) -> Result<Json<Value>, AppError> {
+    println!("\n{:?}\n", claims);
+
+    let mut tags = payload.tags.clone();
+    tags = tags.iter().map(|tag| tag.to_lowercase()).collect::<Vec<String>>();
+    tags.sort();
+    println!("\nSorted tags: {:?}\n", tags);
+
     let topic: Topic = sqlx::query_as(
         r#"
-            select _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
-                select row_to_json(u) from (
-                    select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
-                    from users
-                    where _id = t.user_id
-                ) u
+            with u as (
+                select _id, avatar, bio, birthday, to_char(create_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as create_at, email, favorite, gender, job, nickname, phone, to_char(update_at + interval '8 hours', 'YYYY-MM-DD HH24:MI:SS') as update_at, username
+                from users
+                where _id = $1
+            )
+            update topics
+            set content = $2, tags = $3, title = $4
+            where _id = $5
+            returning _id, comments, content, create_at, favorite, tags, title, update_at, user_id, (
+                select row_to_json(u) from u
             ) as user
-            from topics t
-            where _id = $1
         "#,
     )
-    .bind(&topic_id)
+    .bind(&payload.user_id)
+    .bind(&payload.content)
+    .bind(&tags)
+    .bind(&payload.title)
+    .bind(&payload._id)
     .fetch_one(&pool)
     .await?;
 
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
-    res.insert("msg".to_string(), json!("Topic query succeed."));
+    res.insert("msg".to_string(), json!("Topic update succeed."));
     res.insert("topic".to_string(), json!(&topic));
 
     println!("\n{:?}\n", res);
@@ -127,12 +187,12 @@ pub async fn get_topics(
 }
 
 pub async fn get_user_profile(
-    _claims: Claims,
+    claims: Claims,
     State(pool): State<Pool<Postgres>>,
     Path(username): Path<String>,
     Query(args): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AppError> {
-    println!("\n{:?}\n", _claims);
+    println!("\n{:?}\n", claims);
     println!("\nQuery Args: {:?}\n", args);
     let page = args
         .get("page")
@@ -154,12 +214,12 @@ pub async fn get_user_profile(
 }
 
 pub async fn get_user_favorites(
-    _claims: Claims,
+    claims: Claims,
     State(pool): State<Pool<Postgres>>,
     Path(username): Path<String>,
     Query(args): Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AppError> {
-    println!("\n{:?}\n", _claims);
+    println!("\n{:?}\n", claims);
     println!("\nQuery Args: {:?}\n", args);
     let page = args
         .get("page")
