@@ -50,8 +50,6 @@ pub async fn create_topic(
     res.insert("msg".to_string(), json!("Topic create succeed."));
     res.insert("topic".to_string(), json!(&topic));
 
-    println!("\n{:?}\n", res);
-
     Ok(Json(json!(res)))
 }
 
@@ -60,15 +58,14 @@ pub async fn get_topic(
     Path(topic_id): Path<Uuid>,
 ) -> Result<Json<Value>, AppError> {
     let topic = common::query_topic(&pool, topic_id).await?;
+    let mut topic = json!(&topic);
+    topic["comments"] = topic["comments_arr"].clone();
+    topic["comments_arr"].take();
 
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("Topic query succeed."));
-    res.insert("topic".to_string(), json!(&topic));
-    res["topic"]["comments"] = res["topic"]["comments_arr"].clone();
-    res["topic"]["comments_arr"] = json!(null);
-
-    println!("\n{:?}\n", res);
+    res.insert("topic".to_string(), topic);
 
     Ok(Json(json!(res)))
 }
@@ -81,17 +78,16 @@ pub async fn get_update_topic(
     println!("\n{:?}\n", claims);
 
     let topic = common::query_topic(&pool, topic_id).await?;
-    let user = topic.user.clone().unwrap();
+    let mut topic = json!(&topic);
+    topic["comments"] = topic["comments_arr"].clone();
+    topic["comments_arr"].take();
+    let user = topic["user"].clone();
 
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("Topic delete succeed."));
-    res.insert("topic".to_string(), json!(&topic));
-    res.insert("user".to_string(), json!(&user));
-    res["topic"]["comments"] = res["topic"]["comments_arr"].clone();
-    res["topic"]["comments_arr"] = json!(null);
-
-    println!("\n{:?}\n", res);
+    res.insert("topic".to_string(), topic);
+    res.insert("user".to_string(), user);
 
     Ok(Json(json!(res)))
 }
@@ -141,14 +137,14 @@ pub async fn topic_update(
     .fetch_one(&pool)
     .await?;
 
+    let mut topic = json!(&topic);
+    topic["comments"] = topic["comments_arr"].clone();
+    topic["comments_arr"].take();
+
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("Topic update succeed."));
-    res.insert("topic".to_string(), json!(&topic));
-    res["topic"]["comments"] = res["topic"]["comments_arr"].clone();
-    res["topic"]["comments_arr"] = json!(null);
-
-    println!("\n{:?}\n", res);
+    res.insert("topic".to_string(), topic);
 
     Ok(Json(json!(res)))
 }
@@ -199,13 +195,13 @@ pub async fn topic_comment(
     .fetch_all(&pool)
     .await?;
 
+    let mut topic = json!(&topic);
+    topic["comments"] = json!(&comments);
+
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("Topic comment succeed."));
-    res.insert("updatedTopic".to_string(), json!(&topic));
-    res["updatedTopic"]["comments"] = json!(&comments);
-
-    println!("\n{:?}\n", res);
+    res.insert("updatedTopic".to_string(), topic);
 
     Ok(Json(json!(res)))
 }
@@ -257,8 +253,6 @@ pub async fn get_topics(
     res.insert("topics".to_string(), json!(&topics));
     res.insert("total".to_string(), json!(&total));
 
-    println!("\n{:?}\n", res);
-
     Ok(Json(json!(res)))
 }
 
@@ -283,8 +277,6 @@ pub async fn get_user_profile(
     res.insert("page".to_string(), json!(&page));
     res.insert("topics".to_string(), json!(&topics));
     res.insert("total".to_string(), json!(&total));
-
-    println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
 }
@@ -313,8 +305,6 @@ pub async fn get_user_favorites(
     res.insert("page".to_string(), json!(&page));
     res.insert("topics".to_string(), json!(&topics));
     res.insert("total".to_string(), json!(&total));
-
-    println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
 }

@@ -143,3 +143,11 @@ Authorization: Bearer {{user_login.response.body.$.token}}
 ### Profile, (User)Someone's Favorites
 GET {{host}}/profile/q/favorites HTTP/1.1
 Authorization: Bearer {{user_login.response.body.$.token}}
+
+
+### Tag List
+GET {{host}}/tags HTTP/1.1
+
+
+### Tag Info
+GET {{host}}/tags/conduit HTTP/1.1
