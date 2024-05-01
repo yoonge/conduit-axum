@@ -56,8 +56,6 @@ pub async fn login(
     res.insert("token".to_string(), json!(token));
     res.insert("user".to_string(), json!(&user));
 
-    println!("\n{:?}\n", res);
-
     Ok(Json(json!(res)))
 }
 
@@ -108,8 +106,6 @@ pub async fn register(
     res.insert("token".to_string(), json!(token));
     res.insert("user".to_string(), json!(&user));
 
-    println!("\n{:?}\n", res);
-
     Ok(Json(json!(res)))
 }
 
@@ -134,8 +130,6 @@ pub async fn get_user(
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("User query succeed."));
     res.insert("user".to_string(), json!(&user));
-
-    println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
 }
@@ -181,8 +175,6 @@ pub async fn get_users(
     res.insert("total".to_string(), json!(&total));
     res.insert("users".to_string(), json!(&users));
 
-    println!("\n{:?}\n", res);
-
     Ok(Json(json!(res)))
 }
 
@@ -198,8 +190,6 @@ pub async fn get_my_settings(
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
     res.insert("msg".to_string(), json!("User settings query succeed."));
     res.insert("user".to_string(), json!(&user));
-
-    println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
 }
@@ -248,8 +238,6 @@ pub async fn update_my_settings(
     res.insert("msg".to_string(), json!("User settings update succeed."));
     res.insert("updatedUser".to_string(), json!(&user));
 
-    println!("\n{:?}\n", res);
-
     Ok(Json(json!(res)))
 }
 
@@ -274,8 +262,6 @@ pub async fn get_my_topics(
     res.insert("topics".to_string(), json!(&topics));
     res.insert("total".to_string(), json!(&total));
 
-    println!("\n{:?}\n", res);
-
     Ok(Json(json!(res)))
 }
 
@@ -299,8 +285,6 @@ pub async fn get_my_favorites(
     res.insert("page".to_string(), json!(&page));
     res.insert("topics".to_string(), json!(&topics));
     res.insert("total".to_string(), json!(&total));
-
-    println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
 }
@@ -378,8 +362,6 @@ pub async fn favor(
     res.insert("msg".to_string(), json!("User favor / disfavor succeed."));
     res.insert("updatedTopic".to_string(), json!(&topic));
     res.insert("updatedUser".to_string(), json!(&user));
-
-    println!("\n{:?}\n", res);
 
     Ok(Json(json!(res)))
 }

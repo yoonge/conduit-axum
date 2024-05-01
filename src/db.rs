@@ -123,3 +123,12 @@ pub struct NewComment {
     pub topic: Uuid,
     pub user_id: Uuid,
 }
+
+#[derive(Clone, Debug, Deserialize, FromRow, Serialize)]
+pub struct Tag {
+    pub _id: Uuid,
+    #[serde(with = "date_fmt")]
+    pub create_at: DateTime<Local>,
+    pub tag: String,
+    pub topics: Vec<Uuid>,
+}

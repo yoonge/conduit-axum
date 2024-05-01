@@ -10,7 +10,7 @@ use tracing_subscriber::fmt::time::ChronoLocal;
 mod api;
 mod db;
 
-use self::api::{topic, user};
+use self::api::{tag, topic, user};
 
 #[tokio::main]
 async fn main() {
@@ -50,6 +50,8 @@ async fn main() {
             "/api/profile/:username/favorites",
             get(topic::get_user_favorites),
         )
+        .route("/api/tags", get(tag::get_tags))
+        .route("/api/tags/:tag", get(tag::get_topics_by_tag))
         .with_state(pool)
         .layer(trace_layer);
 

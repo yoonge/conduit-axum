@@ -2,7 +2,7 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use super::{utils::topic_fmt, AppError, PAGE_SIZE};
-use crate::db::{Topic, User};
+use crate::db::{Tag, Topic, User};
 
 pub async fn query_user(pool: &Pool<Postgres>, user_id: Uuid) -> Result<User, AppError> {
     let user: User = sqlx::query_as(
@@ -45,6 +45,21 @@ pub async fn query_topic(pool: &Pool<Postgres>, topic_id: Uuid) -> Result<Topic,
     .await?;
 
     Ok(topic)
+}
+
+pub async fn _query_tag(pool: &Pool<Postgres>, tag: String) -> Result<Tag, AppError> {
+    let tag: Tag = sqlx::query_as(
+        r#"
+            select _id, create_at, tag, topics
+            from tags
+            where tag = $1
+        "#
+    )
+    .bind(&tag)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(tag)
 }
 
 pub async fn get_user_topics(

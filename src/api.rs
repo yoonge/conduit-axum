@@ -5,6 +5,7 @@ use axum::{
 use serde_json::json;
 
 pub mod common;
+pub mod tag;
 pub mod topic;
 pub mod user;
 pub mod utils;
