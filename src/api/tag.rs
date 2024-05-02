@@ -5,8 +5,10 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use serde::Deserialize;
 use serde_json::{json, Map, Value};
 use sqlx::{Pool, Postgres};
+use uuid::Uuid;
 
 use crate::db::{Tag, Topic};
 
@@ -86,4 +88,27 @@ pub async fn get_topics_by_tag(
     res.insert("total".to_string(), json!(&total));
 
     Ok(Json(json!(res)))
+}
+
+pub async fn update_tags(
+    State(pool): State<Pool<Postgres>>,
+    Json(payload): Json<TagsPayload>,
+) -> Result<Json<Value>, AppError> {
+    sqlx::query(
+        r#"
+            select update_tags($1, $2)
+        "#
+    )
+    .bind(&payload.tags)
+    .bind(&payload.topic_id)
+    .execute(&pool)
+    .await?;
+
+    Ok(Json(json!(())))
+}
+
+#[derive(Deserialize)]
+pub struct TagsPayload {
+    tags: Vec<String>,
+    topic_id: Uuid,
 }
