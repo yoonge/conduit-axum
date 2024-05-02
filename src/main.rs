@@ -52,6 +52,7 @@ async fn main() {
         )
         .route("/api/tags", get(tag::get_tags))
         .route("/api/tags/:tag", get(tag::get_topics_by_tag))
+        .route("/api/tags/update", post(tag::update_tags))
         .with_state(pool)
         .layer(trace_layer);
 

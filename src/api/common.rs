@@ -53,7 +53,7 @@ pub async fn _query_tag(pool: &Pool<Postgres>, tag: String) -> Result<Tag, AppEr
             select _id, create_at, tag, topics
             from tags
             where tag = $1
-        "#
+        "#,
     )
     .bind(&tag)
     .fetch_one(pool)

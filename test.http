@@ -151,3 +151,14 @@ GET {{host}}/tags HTTP/1.1
 
 ### Tag Info
 GET {{host}}/tags/conduit HTTP/1.1
+
+
+### Tags Update
+POST {{host}}/tags/update HTTP/1.1
+Authorization: Bearer {{user_login.response.body.$.token}}
+content-type: {{json}}
+
+{
+    "tags": ["realword", "api", "conduit"],
+    "topic_id": "edb5c8d7-be7f-4242-923f-b4e4505a57bc"
+}
