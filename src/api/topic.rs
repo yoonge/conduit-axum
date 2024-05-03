@@ -10,7 +10,7 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use super::{
-    common,
+    common, tag,
     utils::{jwt::Claims, topic_fmt},
     AppError, PAGE_SIZE,
 };
@@ -44,6 +44,8 @@ pub async fn create_topic(
     .bind(&payload.user_id)
     .fetch_one(&pool)
     .await?;
+
+    tag::update_tags(pool, tags, vec![], topic._id).await?;
 
     let mut res = Map::new();
     res.insert("code".to_string(), json!(StatusCode::OK.as_u16()));
@@ -137,6 +139,8 @@ pub async fn topic_update(
     .fetch_one(&pool)
     .await?;
 
+    tag::update_tags(pool, tags, payload.tags_removed, payload._id).await?;
+
     let mut topic = json!(&topic);
     topic["comments"] = topic["comments_arr"].clone();
     topic["comments_arr"].take();
@@ -190,8 +194,9 @@ pub async fn topic_comment(
             from comments
             where topic = $1
             order by create_at desc
-        "#
-    ).bind(&payload.topic)
+        "#,
+    )
+    .bind(&payload.topic)
     .fetch_all(&pool)
     .await?;
 
