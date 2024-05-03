@@ -6,8 +6,8 @@ create table if not exists tags (
     topics uuid[] not null default array[]::uuid[]
 );
 
-create or replace function update_tags(tags_arr text[], topic_id uuid) returns void as
-$$
+create or replace function update_tags(tags_arr text[], topic_id uuid) returns void
+as $$
 declare
     tag_txt text;
 begin
@@ -27,6 +27,20 @@ begin
             insert into tags (tag, topics)
             values (tag_txt, array[topic_id]);
         end if;
+    end loop;
+end;
+$$ language plpgsql;
+
+create or replace function remove_tags(tags_removed text[], topic_id uuid) returns void
+as $$
+declare
+    tag_txt text;
+begin
+    foreach tag_txt in array tags_removed
+    loop
+        update tags t
+        set topics = array_remove(t.topics, topic_id)
+        where t.tag = tag_txt;
     end loop;
 end;
 $$ language plpgsql;

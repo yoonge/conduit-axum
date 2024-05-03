@@ -32,9 +32,7 @@ $ cargo run
 <!-- ## ⚡ Features -->
 
 
-<!-- ## 📌 TODO
-
-- create or delete tag when create and update topic. -->
+<!-- ## 📌 TODO -->
 
 
 ## 📄 License

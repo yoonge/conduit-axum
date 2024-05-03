@@ -97,6 +97,7 @@ pub struct TopicPayload {
     pub _id: Uuid,
     pub content: String,
     pub tags: Vec<String>,
+    pub tags_removed: Vec<String>,
     pub title: String,
     pub user_id: Uuid,
 }

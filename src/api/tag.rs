@@ -5,7 +5,6 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde::Deserialize;
 use serde_json::{json, Map, Value};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -91,24 +90,39 @@ pub async fn get_topics_by_tag(
 }
 
 pub async fn update_tags(
-    State(pool): State<Pool<Postgres>>,
-    Json(payload): Json<TagsPayload>,
-) -> Result<Json<Value>, AppError> {
+    pool: Pool<Postgres>,
+    tags: Vec<String>,
+    tags_removed: Vec<String>,
+    topic_id: Uuid,
+) -> Result<(), AppError> {
     sqlx::query(
         r#"
             select update_tags($1, $2)
         "#
     )
-    .bind(&payload.tags)
-    .bind(&payload.topic_id)
+    .bind(&tags)
+    .bind(&topic_id)
     .execute(&pool)
     .await?;
 
-    Ok(Json(json!(())))
-}
+    sqlx::query(
+        r#"
+            select remove_tags($1, $2)
+        "#
+    )
+    .bind(&tags_removed)
+    .bind(&topic_id)
+    .execute(&pool)
+    .await?;
 
-#[derive(Deserialize)]
-pub struct TagsPayload {
-    tags: Vec<String>,
-    topic_id: Uuid,
+    sqlx::query(
+        r#"
+            delete from tags
+            where topics = array[]::uuid[]
+        "#
+    )
+    .execute(&pool)
+    .await?;
+
+    Ok(())
 }
